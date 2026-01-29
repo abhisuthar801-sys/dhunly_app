@@ -25,3 +25,8 @@ android {
         versionName "1.0"
     }
 }
+
+dependencies {
+    // Ye line missing hone ki wajah se "io" error aa raha hai
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+}
