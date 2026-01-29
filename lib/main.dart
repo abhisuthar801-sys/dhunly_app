@@ -30,20 +30,22 @@ class _DhunlyPlayerState extends State<DhunlyPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF121212),
+      appBar: AppBar(title: Text("DHUNLY"), backgroundColor: Colors.transparent, elevation: 0, centerTitle: true),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 250, height: 250,
+              width: 280, height: 280,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                image: DecorationImage(image: NetworkImage("https://picsum.photos/300"), fit: BoxFit.cover),
+                boxShadow: [BoxShadow(color: Color(0xFF1DB954).withOpacity(0.4), blurRadius: 20)],
+                image: DecorationImage(image: NetworkImage("https://picsum.photos/400"), fit: BoxFit.cover),
               ),
             ),
-            SizedBox(height: 30),
-            Text("Now Playing", style: TextStyle(color: Color(0xFF1DB954), fontSize: 18)),
-            Text("Online Stream", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            SizedBox(height: 40),
+            Text("Spotify Style Stream", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            Text("By Dhunly App", style: TextStyle(color: Colors.grey, fontSize: 16)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
               child: StreamBuilder<Duration?>(
@@ -67,7 +69,8 @@ class _DhunlyPlayerState extends State<DhunlyPlayer> {
                   builder: (context, snapshot) {
                     final playing = snapshot.data?.playing ?? false;
                     return IconButton(
-                      icon: Icon(playing ? Icons.pause_circle : Icons.play_circle, color: Color(0xFF1DB954), size: 70),
+                      iconSize: 80,
+                      icon: Icon(playing ? Icons.pause_circle : Icons.play_circle, color: Color(0xFF1DB954)),
                       onPressed: playing ? _player.pause : _player.play,
                     );
                   },
