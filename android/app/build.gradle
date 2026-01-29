@@ -27,6 +27,5 @@ android {
 }
 
 dependencies {
-    // Yahan maine version direct likh diya hai taaki build fail na ho
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
 }
