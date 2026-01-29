@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace "com.abhi.dhunly"
-    compileSdkVersion 34 // Ise 34 kar diya hai for better support
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId "com.abhi.dhunly"
