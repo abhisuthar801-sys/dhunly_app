@@ -1,10 +1,10 @@
 name: dhunly_app
-description: "A new Flutter project."
+description: "Dhunly Music App"
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.10.0 <4.0.0' # Ye line fix karegi error ko
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -18,7 +18,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: "ic_launcher"
-  ios: true
+  ios: false # Ab error nahi aayega
   image_path: "assets/logo.png"
   adaptive_icon_background: "#121212"
 
