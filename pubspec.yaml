@@ -1,15 +1,14 @@
 name: dhunly_app
-description: A new Flutter project.
+description: Modern Flutter Project
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0' # Ye line Flutter ko modern banati hai
+  sdk: '>=3.0.0 <4.0.0' # Ye line Codemagic ko batati hai ki project naya hai
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
