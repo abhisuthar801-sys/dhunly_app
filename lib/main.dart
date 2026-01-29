@@ -11,7 +11,6 @@ class DhunlyPlayer extends StatefulWidget {
 
 class _DhunlyPlayerState extends State<DhunlyPlayer> {
   late AudioPlayer _player;
-  // Sample Online Song
   final String musicUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
   @override
@@ -31,68 +30,48 @@ class _DhunlyPlayerState extends State<DhunlyPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF121212),
-      appBar: AppBar(
-        title: Text("DHUNLY SPOTIFY", style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Album Art
             Container(
-              width: MediaQuery.of(context).size.width * 0.8,
-              height: MediaQuery.of(context).size.width * 0.8,
+              width: 250, height: 250,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Color(0xFF1DB954).withOpacity(0.3), blurRadius: 30)],
-                image: DecorationImage(image: NetworkImage("https://picsum.photos/500/500?music"), fit: BoxFit.cover),
+                image: DecorationImage(image: NetworkImage("https://picsum.photos/300"), fit: BoxFit.cover),
               ),
             ),
-            SizedBox(height: 40),
-            Text("Streaming Now", style: TextStyle(color: Color(0xFF1DB954), fontSize: 16, fontWeight: FontWeight.bold)),
-            Text("Online Track 01", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
             SizedBox(height: 30),
-            
-            // Progress Bar
-            StreamBuilder<Duration?>(
-              stream: _player.positionStream,
-              builder: (context, snapshot) {
-                return ProgressBar(
-                  progress: snapshot.data ?? Duration.zero,
-                  buffered: _player.bufferedPosition,
-                  total: _player.duration ?? Duration.zero,
-                  progressBarColor: Color(0xFF1DB954),
-                  baseBarColor: Colors.white12,
-                  thumbColor: Colors.white,
-                  onSeek: (duration) => _player.seek(duration),
-                );
-              },
+            Text("Now Playing", style: TextStyle(color: Color(0xFF1DB954), fontSize: 18)),
+            Text("Online Stream", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              child: StreamBuilder<Duration?>(
+                stream: _player.positionStream,
+                builder: (context, snapshot) {
+                  return ProgressBar(
+                    progress: snapshot.data ?? Duration.zero,
+                    total: _player.duration ?? Duration.zero,
+                    progressBarColor: Color(0xFF1DB954),
+                    baseBarColor: Colors.white24,
+                    onSeek: (duration) => _player.seek(duration),
+                  );
+                },
+              ),
             ),
-
-            SizedBox(height: 20),
-
-            // Music Controls
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.shuffle, color: Colors.grey),
-                IconButton(icon: Icon(Icons.skip_previous, color: Colors.white, size: 40), onPressed: () {}),
                 StreamBuilder<PlayerState>(
                   stream: _player.playerStateStream,
                   builder: (context, snapshot) {
                     final playing = snapshot.data?.playing ?? false;
                     return IconButton(
-                      icon: Icon(playing ? Icons.pause_circle_filled : Icons.play_circle_filled, color: Color(0xFF1DB954), size: 85),
+                      icon: Icon(playing ? Icons.pause_circle : Icons.play_circle, color: Color(0xFF1DB954), size: 70),
                       onPressed: playing ? _player.pause : _player.play,
                     );
                   },
                 ),
-                IconButton(icon: Icon(Icons.skip_next, color: Colors.white, size: 40), onPressed: () {}),
-                Icon(Icons.repeat, color: Colors.grey),
               ],
             ),
           ],
