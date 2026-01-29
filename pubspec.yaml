@@ -8,27 +8,8 @@ environment:
 
 dependencies:
   flutter:
-    sdk: fluttername: dhunly_app
-description: "Dhunly Online Music App"
-publish_to: 'none'
-version: 1.0.0+1
-
-environment:
-  sdk: '>=3.10.0 <4.0.0'
-
-dependencies:
-  flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  just_audio: ^0.9.36
-  audio_video_progress_bar: ^2.0.3
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
-flutter:
-  uses-material-design: true
   just_audio: ^0.9.36
   audio_video_progress_bar: ^2.0.3
 
