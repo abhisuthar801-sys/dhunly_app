@@ -3,20 +3,19 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Hard Reset & Link Plugins
+      - name: Nuclear Clean
         script: |
-          # 1. Purana kachra saaf karo
+          # 1. Sab delete karo jo raste mein aa raha hai
           flutter clean
-          rm -rf android/.gradle
           rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
           
-          # 2. Local properties aur SDK fix
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          
-          # 3. Plugins fresh download aur link
+          # 2. Plugins fresh link karo
           flutter pub get
           
-          # 4. Gradlew generate aur permission fix
+          # 3. Local properties setup
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          
+          # 4. Gradlew repair
           cd android
           gradle wrapper --gradle-version 8.4
           chmod +x gradlew
@@ -24,7 +23,7 @@ workflows:
           
       - name: Build APK
         script: |
-          # Is baar plugins ko zabardasti compile karenge
+          # Bina dependency validation ke build, taaki wo minor warnings par na ruke
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
