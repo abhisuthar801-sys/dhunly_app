@@ -1,18 +1,30 @@
-scripts:
-  - name: Nuclear Fix
-    script: |
-      # 1. Purana sara kachra saaf karo
-      rm -rf android/app/src/main/kotlin/com/abhi/dhunly
-      mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
-      
-      # 2. Sahi file zabardasti likho
-      echo 'package com.abhi.dhunly
-      import io.flutter.embedding.android.FlutterActivity
-      class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
-      
-      # 3. Flutter clean zaroori hai
-      flutter clean
-      flutter pub get
-  - name: Build APK
-    script: |
-      flutter build apk --debug --android-skip-build-dependency-validation
+workflows:
+  android-workflow:
+    name: Dhunly Unique Build
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    scripts:
+      - name: Nuclear Fix (MainActivity & Folders)
+        script: |
+          # 1. Galat folders ko delete karke sahi path banana
+          rm -rf android/app/src/main/kotlin/com/abhi/dhunly
+          mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
+          
+          # 2. Sahi MainActivity.kt file khud likhna
+          echo 'package com.abhi.dhunly
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
+          
+          # 3. Flutter cache saaf karna
+          flutter clean
+          flutter pub get
+      - name: Build APK (Ignore Warnings)
+        script: |
+          # Sabse solid command APK banane ke liye
+          flutter build apk --debug --android-skip-build-dependency-validation
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - abhisuthar801@gmail.com
