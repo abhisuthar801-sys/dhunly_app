@@ -3,21 +3,28 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Generate Missing Gradle Files
+      - name: Hard Reset & Link Plugins
         script: |
-          # SDK path set karo
+          # 1. Purana kachra saaf karo
+          flutter clean
+          rm -rf android/.gradle
+          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          
+          # 2. Local properties aur SDK fix
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
           
-          # Android folder mein ja kar missing gradlew files banao
-          cd android
+          # 3. Plugins fresh download aur link
           flutter pub get
+          
+          # 4. Gradlew generate aur permission fix
+          cd android
           gradle wrapper --gradle-version 8.4
           chmod +x gradlew
           cd ..
           
       - name: Build APK
         script: |
-          # Ab build chalegi kyunki gradlew ban chuka hai
+          # Is baar plugins ko zabardasti compile karenge
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
