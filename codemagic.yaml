@@ -4,10 +4,6 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 60
     scripts:
-      - name: Generate App Icons
-        script: |
-          flutter pub get
-          dart run flutter_launcher_icons
       - name: Build Android APK
         script: |
           flutter build apk --debug
