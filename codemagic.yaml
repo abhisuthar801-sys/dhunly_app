@@ -1,15 +1,18 @@
 workflows:
   android-workflow:
-    name: Dhunly Final
+    name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Setup Config
+      - name: Force Clean Setup
         script: |
-          # Flutter ko batana ki SDK kahan hai
+          # Sab kuch fresh start karo
+          rm -f android/local.properties
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          flutter clean
           flutter pub get
       - name: Build APK
         script: |
+          # Bina dependency check ke build karo
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
