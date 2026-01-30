@@ -3,22 +3,24 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Force Plugin Link
+      - name: Setup and Repair
         script: |
-          # 1. Purana kachra saaf
-          flutter clean
-          
-          # 2. Local properties set karo
+          # 1. SDK aur Plugins set karo
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          
-          # 3. Plugins fresh download
           flutter pub get
+          
+          # 2. Agar gradlew missing hai toh use generate karo
+          cd android
+          if [ ! -f "gradlew" ]; then
+            echo "Gradlew not found, generating..."
+            gradle wrapper
+          fi
+          chmod +x gradlew
+          cd ..
           
       - name: Build APK
         script: |
-          # Android folder ke andar ja kar gradle ko permissions do aur build karo
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          # Sabse safe tarika build karne ka
+          flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
-      - android/app/build/outputs/apk/debug/*.apk
+      - build/app/outputs/flutter-apk/*.apk
