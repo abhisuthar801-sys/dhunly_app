@@ -1,16 +1,20 @@
 workflows:
   android-workflow:
-    name: Dhunly Fast Build
-    max_build_duration: 15
+    name: Dhunly Final Repair
     instance_type: mac_mini_m2
     scripts:
-      - name: Fast Prepare
+      - name: Repair and Get Plugins
         script: |
-          # Clean ko skip karke dekhte hain agar speed badhe
+          # 1. Purana sara configuration saaf karo
+          flutter clean
+          rm -rf .pub-cache
+          rm -rf android/.gradle
+          
+          # 2. Plugins aur Engine ko dobara download karo
           flutter pub get
-      - name: Build APK (Fast Mode)
+      - name: Build APK (Force Sync)
         script: |
-          # --debug build fast hoti hai
-          flutter build apk --debug --no-pub --android-skip-build-dependency-validation
+          # Is baar hum naya build system force karenge
+          flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
