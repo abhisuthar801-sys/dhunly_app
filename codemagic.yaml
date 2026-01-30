@@ -1,6 +1,12 @@
-scripts:
-  - name: Clean and Build
-    script: |
-      flutter clean
-      flutter pub get
-      flutter build apk --debug
+workflows:
+  android-workflow:
+    name: Dhunly Build
+    instance_type: mac_mini_m2
+    scripts:
+      - name: Clean and Build
+        script: |
+          flutter clean
+          flutter pub get
+          flutter build apk --debug
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
