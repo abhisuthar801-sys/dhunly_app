@@ -1,23 +1,25 @@
 workflows:
   android-workflow:
-    name: Dhunly Final Success
+    name: Dhunly Final Fix
     instance_type: mac_mini_m2
-    max_build_duration: 15
     scripts:
-      - name: Force Repair Environment
+      - name: Force Plugin Link
         script: |
-          # SDK rasta set karo
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          
-          # Purana kachra saaf karo
+          # 1. Purani cache aur generated files saaf karo
           flutter clean
           rm -rf android/.gradle
+          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
           
-          # Plugins load karo
+          # 2. SDK path aur pub get
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
           flutter pub get
-      - name: Build APK (Stable Mode)
+          
+          # 3. Android dependencies download karo
+          cd android && ./gradlew clean && cd ..
+          
+      - name: Build APK
         script: |
-          # Debug APK build shuru karo
+          # Is baar bina validation ke full build
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
