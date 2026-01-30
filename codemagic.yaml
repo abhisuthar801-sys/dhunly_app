@@ -1,24 +1,18 @@
-workflows:
-  android-workflow:
-    name: Dhunly Final Build
-    instance_type: mac_mini_m2
-    scripts:
-      - name: Force Fix Icons and Folders
-        script: |
-          # 1. MainActivity Fix
-          mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
-          echo 'package com.abhi.dhunly
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
-          
-          # 2. Dummy Icons Fix (Error hatane ke liye)
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          cp flutter_export_image.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png || true
-      - name: Install Dependencies
-        script: flutter pub get
-      - name: Build APK (Bypass Validation)
-        script: |
-          # Is command se icon aur version ka error bypass ho jayega
-          flutter build apk --debug --android-skip-build-dependency-validation
-    artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+scripts:
+  - name: Nuclear Fix
+    script: |
+      # 1. Purana sara kachra saaf karo
+      rm -rf android/app/src/main/kotlin/com/abhi/dhunly
+      mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
+      
+      # 2. Sahi file zabardasti likho
+      echo 'package com.abhi.dhunly
+      import io.flutter.embedding.android.FlutterActivity
+      class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
+      
+      # 3. Flutter clean zaroori hai
+      flutter clean
+      flutter pub get
+  - name: Build APK
+    script: |
+      flutter build apk --debug --android-skip-build-dependency-validation
