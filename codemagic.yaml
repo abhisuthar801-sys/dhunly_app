@@ -1,30 +1,30 @@
 workflows:
   android-workflow:
-    name: Dhunly Unique Build
-    max_build_duration: 30
+    name: Dhunly Final Success Build
     instance_type: mac_mini_m2
     scripts:
-      - name: Nuclear Fix (MainActivity & Folders)
+      - name: Hard Reset & Path Fix
         script: |
-          # 1. Galat folders ko delete karke sahi path banana
+          # 1. Purane kachre ko jad se saaf karo
+          flutter clean
+          
+          # 2. Sahi folder structure zabardasti banao
           rm -rf android/app/src/main/kotlin/com/abhi/dhunly
           mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
           
-          # 2. Sahi MainActivity.kt file khud likhna
+          # 3. MainActivity ko basic Android Activity mein badal do (Error bypass karne ke liye)
           echo 'package com.abhi.dhunly
+          import android.os.Bundle
           import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
           
-          # 3. Flutter cache saaf karna
-          flutter clean
+          class MainActivity: FlutterActivity() {
+          }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
+
+          # 4. Sabse important: Dependencies ko fresh load karo
           flutter pub get
-      - name: Build APK (Ignore Warnings)
+      - name: Build APK (The Ultimate Force)
         script: |
-          # Sabse solid command APK banane ke liye
-          flutter build apk --debug --android-skip-build-dependency-validation
+          # Is command mein hum dependency check hi band kar rahe hain
+          flutter build apk --debug --android-skip-build-dependency-validation --multidex
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
-    publishing:
-      email:
-        recipients:
-          - abhisuthar801@gmail.com
