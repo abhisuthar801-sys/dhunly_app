@@ -17,10 +17,6 @@ android {
         jvmTarget = '1.8'
     }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
     defaultConfig {
         applicationId "com.abhi.dhunly"
         minSdkVersion 21
@@ -28,14 +24,9 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
-    }
 }
 
 dependencies {
+    // Ye line plugins ko pehchanne mein madad karegi
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10"
 }
