@@ -5,26 +5,21 @@ workflows:
     scripts:
       - name: Hard Reset & Path Fix
         script: |
-          # 1. Purane kachre ko jad se saaf karo
+          # 1. Purane kachre ko saaf karo
           flutter clean
           
-          # 2. Sahi folder structure zabardasti banao
+          # 2. Sahi folder structure aur file zabardasti banao
           rm -rf android/app/src/main/kotlin/com/abhi/dhunly
           mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
-          
-          # 3. MainActivity ko basic Android Activity mein badal do (Error bypass karne ke liye)
           echo 'package com.abhi.dhunly
-          import android.os.Bundle
           import io.flutter.embedding.android.FlutterActivity
-          
-          class MainActivity: FlutterActivity() {
-          }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
+          class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
 
-          # 4. Sabse important: Dependencies ko fresh load karo
+          # 3. Dependencies load karo
           flutter pub get
-      - name: Build APK (The Ultimate Force)
+      - name: Build APK (Final Action)
         script: |
-          # Is command mein hum dependency check hi band kar rahe hain
-          flutter build apk --debug --android-skip-build-dependency-validation --multidex
+          # Sirf sahi flags ke saath build shuru karein
+          flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
