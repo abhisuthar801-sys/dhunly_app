@@ -1,25 +1,14 @@
 workflows:
   android-workflow:
-    name: Dhunly Final Success Build
+    name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Hard Reset & Path Fix
+      - name: Prepare Project
         script: |
-          # 1. Purane kachre ko saaf karo
           flutter clean
-          
-          # 2. Sahi folder structure aur file zabardasti banao
-          rm -rf android/app/src/main/kotlin/com/abhi/dhunly
-          mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
-          echo 'package com.abhi.dhunly
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
-
-          # 3. Dependencies load karo
           flutter pub get
-      - name: Build APK (Final Action)
+      - name: Build APK
         script: |
-          # Sirf sahi flags ke saath build shuru karein
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
