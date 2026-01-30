@@ -2,17 +2,22 @@ workflows:
   android-workflow:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
+    max_build_duration: 15
     scripts:
-      - name: Force Clean Setup
+      - name: Force Repair Environment
         script: |
-          # Sab kuch fresh start karo
-          rm -f android/local.properties
+          # SDK rasta set karo
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          
+          # Purana kachra saaf karo
           flutter clean
+          rm -rf android/.gradle
+          
+          # Plugins load karo
           flutter pub get
-      - name: Build APK
+      - name: Build APK (Stable Mode)
         script: |
-          # Bina dependency check ke build karo
+          # Debug APK build shuru karo
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
