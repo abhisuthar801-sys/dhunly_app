@@ -1,20 +1,23 @@
 workflows:
   android-workflow:
-    name: Dhunly Final Repair
+    name: Dhunly Final Fix
     instance_type: mac_mini_m2
     scripts:
-      - name: Repair and Get Plugins
+      - name: Force Repair Android
         script: |
-          # 1. Purana sara configuration saaf karo
+          # 1. Sab kuch saaf karo
           flutter clean
           rm -rf .pub-cache
-          rm -rf android/.gradle
           
-          # 2. Plugins aur Engine ko dobara download karo
+          # 2. Android folder ki purani settings reset karo
+          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          
+          # 3. Dependencies ko fresh download karo
           flutter pub get
-      - name: Build APK (Force Sync)
+          
+      - name: Build APK (Force Mode)
         script: |
-          # Is baar hum naya build system force karenge
+          # Build command jo plugins ko dobara link karegi
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
