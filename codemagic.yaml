@@ -3,24 +3,21 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Setup and Repair
+      - name: Generate Missing Gradle Files
         script: |
-          # 1. SDK aur Plugins set karo
+          # SDK path set karo
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          flutter pub get
           
-          # 2. Agar gradlew missing hai toh use generate karo
+          # Android folder mein ja kar missing gradlew files banao
           cd android
-          if [ ! -f "gradlew" ]; then
-            echo "Gradlew not found, generating..."
-            gradle wrapper
-          fi
+          flutter pub get
+          gradle wrapper --gradle-version 8.4
           chmod +x gradlew
           cd ..
           
       - name: Build APK
         script: |
-          # Sabse safe tarika build karne ka
+          # Ab build chalegi kyunki gradlew ban chuka hai
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
