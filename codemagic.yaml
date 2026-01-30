@@ -1,12 +1,19 @@
 workflows:
   android-workflow:
-    name: Dhunly Build
+    name: Dhunly Force Build
     instance_type: mac_mini_m2
     scripts:
-      - name: Clean and Build
+      - name: Force Fix Directory and MainActivity
         script: |
-          flutter clean
-          flutter pub get
-          flutter build apk --debug
+          # Ye purane galat folders ko bypass karega aur sahi rasta banayega
+          rm -rf android/app/src/main/kotlin/com/abhi/dhunly
+          mkdir -p android/app/src/main/kotlin/com/abhi/dhunly
+          echo 'package com.abhi.dhunly
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() { }' > android/app/src/main/kotlin/com/abhi/dhunly/MainActivity.kt
+      - name: Install Dependencies
+        script: flutter pub get
+      - name: Build APK
+        script: flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
