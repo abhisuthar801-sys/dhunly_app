@@ -1,14 +1,16 @@
 workflows:
   android-workflow:
-    name: Dhunly Final Success
+    name: Dhunly Fast Build
+    max_build_duration: 15
     instance_type: mac_mini_m2
     scripts:
-      - name: Prepare Project
+      - name: Fast Prepare
         script: |
-          flutter clean
+          # Clean ko skip karke dekhte hain agar speed badhe
           flutter pub get
-      - name: Build APK
+      - name: Build APK (Fast Mode)
         script: |
-          flutter build apk --debug --android-skip-build-dependency-validation
+          # --debug build fast hoti hai
+          flutter build apk --debug --no-pub --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
