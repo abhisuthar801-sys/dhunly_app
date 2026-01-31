@@ -1,123 +1,111 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlySpotify()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyFast()));
 
-class DhunlySpotify extends StatefulWidget {
-  const DhunlySpotify({super.key});
+class DhunlyFast extends StatefulWidget {
+  const DhunlyFast({super.key});
   @override
-  State<DhunlySpotify> createState() => _DhunlySpotifyState();
+  State<DhunlyFast> createState() => _DhunlyFastState();
 }
 
-class _DhunlySpotifyState extends State<DhunlySpotify> {
+class _DhunlyFastState extends State<DhunlyFast> {
   final player = AudioPlayer();
-  final yt = YoutubeExplode();
   bool isPlaying = false;
-  bool isLoading = false;
-  String currentTitle = "Search a song to play";
-  String currentArtist = "";
+  String currentTitle = "Select a Song";
+  String currentArtist = "Dhunly Hits";
 
-  // Search function jo YouTube se link layega
-  Future<void> searchAndPlay(String query) async {
-    setState(() => isLoading = true);
-    try {
-      // 1. YouTube par gaana dhoondo
-      var searchList = await yt.search.getVideos(query);
-      if (searchList.isNotEmpty) {
-        var video = searchList.first;
-        currentTitle = video.title;
-        currentArtist = video.author;
+  // Fast Direct Links (MP3)
+  final List<Map<String, String>> onlineSongs = [
+    {
+      'title': 'Heeriye (Fast Stream)',
+      'artist': 'Arijit Singh',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+    },
+    {
+      'title': 'Pehle Bhi Main',
+      'artist': 'Animal',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
+    },
+    {
+      'title': 'Lofi Study',
+      'artist': 'Relaxing',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'
+    },
+  ];
 
-        // 2. Audio stream ka link nikalo
-        var manifest = await yt.videos.streamsClient.getManifest(video.id);
-        var audioStream = manifest.audioOnly.withHighestBitrate();
-
-        // 3. Gaana bajao
-        await player.play(UrlSource(audioStream.url.toString()));
-        setState(() {
-          isPlaying = true;
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
-      print("Error: $e");
-    }
+  Future<void> playSong(String url, String title, String artist) async {
+    setState(() {
+      currentTitle = title;
+      currentArtist = artist;
+      isPlaying = true;
+    });
+    await player.stop();
+    await player.play(UrlSource(url));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.green.withOpacity(0.5), Colors.black],
-          ),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 60),
-            const Text("Dhunly Online", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-            
-            // Spotify Style Search Bar
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: TextField(
-                onSubmitted: (value) => searchAndPlay(value),
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Search any song (Spotify Style)...",
-                  hintStyle: const TextStyle(color: Colors.white54),
-                  prefixIcon: const Icon(Icons.search, color: Colors.white),
-                  filled: true,
-                  fillColor: Colors.white10,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                ),
-              ),
+      backgroundColor: const Color(0xFF090909),
+      appBar: AppBar(
+        title: const Text("Dhunly Premium"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // Player Card
+          Container(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Colors.blueAccent, Colors.purpleAccent]),
+              borderRadius: BorderRadius.circular(20),
             ),
-
-            const Spacer(),
-            
-            // Loading Spinner
-            if (isLoading) const CircularProgressIndicator(color: Colors.green),
-
-            // Music Info
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  Text(currentTitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  Text(currentArtist, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            // Player Controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                IconButton(icon: const Icon(Icons.shuffle, color: Colors.white54), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.skip_previous, size: 40, color: Colors.white), onPressed: () {}),
-                GestureDetector(
-                  onTap: () {
+                const CircleAvatar(radius: 30, child: Icon(Icons.music_note)),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(currentTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text(currentArtist, style: const TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 40),
+                  onPressed: () {
                     if (isPlaying) { player.pause(); } else { player.resume(); }
                     setState(() => isPlaying = !isPlaying);
                   },
-                  child: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 80, color: Colors.white),
-                ),
-                IconButton(icon: const Icon(Icons.skip_next, size: 40, color: Colors.white), onPressed: () {}),
-                IconButton(icon: const Icon(Icons.repeat, color: Colors.white54), onPressed: () {}),
+                )
               ],
             ),
-            const SizedBox(height: 80),
-          ],
-        ),
+          ),
+          
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Align(alignment: Alignment.centerLeft, child: Text("Direct Online Songs", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
+          ),
+
+          Expanded(
+            child: ListView.builder(
+              itemCount: onlineSongs.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: const Icon(Icons.play_arrow, color: Colors.blueAccent),
+                  title: Text(onlineSongs[index]['title']!, style: const TextStyle(color: Colors.white)),
+                  subtitle: Text(onlineSongs[index]['artist']!, style: const TextStyle(color: Colors.white54)),
+                  onTap: () => playSong(onlineSongs[index]['url']!, onlineSongs[index]['title']!, onlineSongs[index]['artist']!),
+                );
+              },
+            ),
+          )
+        ],
       ),
     );
   }
