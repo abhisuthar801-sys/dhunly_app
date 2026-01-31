@@ -3,19 +3,18 @@ import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyGlass()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyGlassPro()));
 
-class DhunlyGlass extends StatefulWidget {
-  const DhunlyGlass({super.key});
+class DhunlyGlassPro extends StatefulWidget {
+  const DhunlyGlassPro({super.key});
   @override
-  State<DhunlyGlass> createState() => _DhunlyGlassState();
+  State<DhunlyGlassPro> createState() => _DhunlyGlassProState();
 }
 
-class _DhunlyGlassState extends State<DhunlyGlass> {
+class _DhunlyGlassProState extends State<DhunlyGlassPro> {
   List songs = [];
   bool isLoading = false;
-  String currentSongName = "No Song Playing";
-  String currentArtist = "Select a track";
+  String currentSongName = "Abhi Kuch Nahi Baj Raha";
   String currentImg = "https://cdn-icons-png.flaticon.com/512/3844/3844724.png";
 
   Future<void> searchSongs(String query) async {
@@ -37,132 +36,151 @@ class _DhunlyGlassState extends State<DhunlyGlass> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1e3a8a), Color(0xFF000000), Color(0xFF581c87)],
-              ),
-            ),
-          ),
+          // Background Aesthetic Gradients
+          Positioned(top: -100, left: -50, child: _circleGradient(Colors.blueAccent)),
+          Positioned(bottom: -100, right: -50, child: _circleGradient(Colors.purpleAccent)),
           
-          // Main Content
+          // Blur Layer
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+            child: Container(color: Colors.transparent),
+          ),
+
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                const Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 4)),
-                
-                // Glass Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
-                        ),
-                        child: TextField(
-                          onSubmitted: (v) => searchSongs(v),
-                          style: const TextStyle(color: Colors.white),
-                          decoration: const InputDecoration(
-                            hintText: "Search artist or song...",
-                            hintStyle: TextStyle(color: Colors.white54),
-                            border: InputBorder.none,
-                            icon: Icon(Icons.search, color: Colors.white70),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                if (isLoading) const LinearProgressIndicator(backgroundColor: Colors.transparent, color: Colors.blueAccent),
-
-                // Song List
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    itemCount: songs.length,
-                    itemBuilder: (context, index) {
-                      var song = songs[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(song['image'].last['url'], width: 50, height: 50),
-                          ),
-                          title: Text(song['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600), maxLines: 1),
-                          subtitle: Text(song['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white60)),
-                          onTap: () {
-                            setState(() {
-                              currentSongName = song['name'];
-                              currentArtist = song['artists']['primary'][0]['name'];
-                              currentImg = song['image'].last['url'];
-                            });
-                            // Play logic yahan aayegi
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Bottom Glass Player
-                ClipRRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.4),
-                        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(currentSongName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1),
-                                Text(currentArtist, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          IconButton(icon: const Icon(Icons.skip_previous, color: Colors.white), onPressed: () {}),
-                          Container(
-                            decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
-                            child: const Icon(Icons.play_arrow, color: Colors.black, size: 30),
-                          ),
-                          IconButton(icon: const Icon(Icons.skip_next, color: Colors.white), onPressed: () {}),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                _buildHeader(),
+                _buildSearchBar(),
+                if (isLoading) const LinearProgressIndicator(color: Colors.white, backgroundColor: Colors.transparent),
+                _buildSongList(),
+                _buildMiniPlayer(),
               ],
             ),
           ),
         ],
       ),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // --- UI WIDGETS ---
+
+  Widget _circleGradient(Color color) {
+    return Container(
+      width: 300, height: 300,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.3)),
+    );
+  }
+
+  Widget _buildHeader() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8)),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: TextField(
+              onSubmitted: (v) => searchSongs(v),
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: "Search your vibe...",
+                hintStyle: TextStyle(color: Colors.white38),
+                prefixIcon: Icon(Icons.search, color: Colors.white70),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(vertical: 15),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSongList() {
+    return Expanded(
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: songs.length,
+        itemBuilder: (context, index) {
+          var song = songs[index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: ListTile(
+              leading: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(song['image'].last['url']),
+              ),
+              title: Text(song['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+              subtitle: Text(song['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
+              trailing: const Icon(Icons.more_vert, color: Colors.white38),
+              onTap: () => setState(() {
+                currentSongName = song['name'];
+                currentImg = song['image'].last['url'];
+              }),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMiniPlayer() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
+              const SizedBox(width: 15),
+              Expanded(child: Text(currentSongName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1)),
+              const Icon(Icons.favorite_border, color: Colors.white70),
+              const SizedBox(width: 20),
+              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 40),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return BottomNavigationBar(
+      backgroundColor: Colors.black,
+      selectedItemColor: Colors.blueAccent,
+      unselectedItemColor: Colors.white38,
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: ""),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
+        BottomNavigationBarItem(icon: Icon(Icons.library_music), label: ""),
+      ],
     );
   }
 }
