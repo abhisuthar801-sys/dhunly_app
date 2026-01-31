@@ -9,7 +9,7 @@ class DhunlyPro extends StatefulWidget {
   State<DhunlyPro> createState() => _DhunlyProState();
 }
 
-class _PlayerPageState extends State<DhunlyPro> {
+class _DhunlyProState extends State<DhunlyPro> { // Yahan fix kiya gaya hai
   final player = AudioPlayer();
   bool isPlaying = false;
   Duration duration = Duration.zero;
@@ -18,7 +18,6 @@ class _PlayerPageState extends State<DhunlyPro> {
   @override
   void initState() {
     super.initState();
-    // Gaane ki duration aur current position track karne ke liye
     player.onDurationChanged.listen((d) => setState(() => duration = d));
     player.onPositionChanged.listen((p) => setState(() => position = p));
     player.onPlayerComplete.listen((event) => setState(() => isPlaying = false));
@@ -39,7 +38,6 @@ class _PlayerPageState extends State<DhunlyPro> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Music Disk Decor
             Center(
               child: Container(
                 width: 250, height: 250,
@@ -55,7 +53,6 @@ class _PlayerPageState extends State<DhunlyPro> {
             const Text("Dhunly Premium", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
             const Text("Streaming Online Track", style: TextStyle(color: Colors.white70, fontSize: 16)),
             
-            // Progress Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Slider(
@@ -65,13 +62,12 @@ class _PlayerPageState extends State<DhunlyPro> {
                 max: duration.inSeconds.toDouble(),
                 value: position.inSeconds.toDouble(),
                 onChanged: (value) async {
-                  final position = Duration(seconds: value.toInt());
-                  await player.seek(position);
+                  final seekPosition = Duration(seconds: value.toInt());
+                  await player.seek(seekPosition);
                 },
               ),
             ),
 
-            // Play/Pause Control
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -96,7 +92,6 @@ class _PlayerPageState extends State<DhunlyPro> {
               ],
             ),
             
-            // Volume Slider
             const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
