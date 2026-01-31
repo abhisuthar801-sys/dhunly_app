@@ -9,8 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  audioplayers: ^5.2.1
-  path_provider: ^2.1.2
+  audioplayers: ^5.2.1 # Gaana bajane ke liye
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
   flutter_test:
@@ -19,3 +19,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/logo.png
