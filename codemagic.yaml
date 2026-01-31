@@ -2,15 +2,23 @@ workflows:
   android-workflow:
     name: Dhunly Lite Build
     instance_type: mac_mini_m2
-    max_build_duration: 15
     scripts:
-      - name: Clean and Setup
+      - name: Hard Reset and Setup
         script: |
+          # Sab kuch saaf karo
           flutter clean
+          rm -rf android/.gradle
+          rm -f android/local.properties
+          
+          # SDK path set karo
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          
+          # Dependencies download karo
           flutter pub get
+          
       - name: Build Debug APK
         script: |
+          # Is baar verbose mode mein build karenge taaki details milein
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
