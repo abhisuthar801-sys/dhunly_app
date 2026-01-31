@@ -2,8 +2,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        // Ye line plugins aur engine ko dhoondne ke liye zaruri hai
-        maven { url 'https://storage.googleapis.com/download.flutter.io' }
     }
 }
 
