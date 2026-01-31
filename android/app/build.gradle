@@ -15,17 +15,10 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
 }
 
 dependencies {
+    // Ye plugins ko Java ke saath link karne mein madad karega
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    implementation "androidx.annotation:annotation:1.7.0"
 }
