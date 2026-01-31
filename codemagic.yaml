@@ -7,12 +7,15 @@ workflows:
       flutter: stable
       java: 17
     scripts:
+      - name: Recreate Android Folder
+        script: |
+          # Ye command naya android folder banayegi
+          flutter create . --platforms android
       - name: Set up local.properties
         script: |
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
       - name: Get Flutter packages
         script: |
-          flutter clean
           flutter pub get
       - name: Build Android APK
         script: |
