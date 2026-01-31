@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Dhunly Simple Build
+    name: Dhunly Spotify Build
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
@@ -9,8 +9,9 @@ workflows:
     scripts:
       - name: Create Fresh Android Project
         script: |
-          # Ye command bina kisi error ke naya folder banayegi
           flutter create . --platforms android --org com.abhi.dhunly
+          # Ye niche wali line Internet Permission add karegi bina file khole
+          sed -i '' '/<application/i\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
       - name: Get Packages
         script: |
           flutter pub get
