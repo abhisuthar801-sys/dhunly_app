@@ -24,22 +24,11 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
-        }
-    }
 }
 
 dependencies {
-    // Kotlin support
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
-    
-    // AndroidX support (Isse @NonNull aur @Keep wale errors jayenge)
+    // Sirf ye annotation rakho, baki Flutter engine khud aayega
     implementation "androidx.annotation:annotation:1.7.0"
     implementation "androidx.appcompat:appcompat:1.6.1"
-    
-    // Flutter embedding (Isse FlutterEngine wala error jayega)
-    implementation "io.flutter:flutter_embedding_debug:1.0.0-e672b006451c58851452b0cf137889163c4573f0"
 }
