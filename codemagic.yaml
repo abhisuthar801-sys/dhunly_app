@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Dhunly Spotify Build
+    name: Dhunly Final Build
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
@@ -10,14 +10,16 @@ workflows:
       - name: Create Fresh Android Project
         script: |
           flutter create . --platforms android --org com.abhi.dhunly
-          # Naya tarika: Poori file ko hi overwrite kar dete hain sahi permission ke saath
+          # Naya tarika: Permission ko manifest tag ke turant niche daalna
           cat <<EOF > android/app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
               <application
                   android:label="Dhunly"
                   android:name="\${applicationName}"
-                  android:icon="@mipmap/ic_launcher">
+                  android:icon="@mipmap/ic_launcher"
+                  android:usesCleartextTraffic="true">
                   <activity
                       android:name=".MainActivity"
                       android:exported="true"
