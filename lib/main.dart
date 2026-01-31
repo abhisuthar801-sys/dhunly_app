@@ -9,18 +9,48 @@ class DhunlyPro extends StatefulWidget {
   State<DhunlyPro> createState() => _DhunlyProState();
 }
 
-class _DhunlyProState extends State<DhunlyPro> { // Yahan fix kiya gaya hai
+class _DhunlyProState extends State<DhunlyPro> {
   final player = AudioPlayer();
   bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
+
+  // Playlist Data
+  int currentIndex = 0;
+  final List<Map<String, String>> playlist = [
+    {'title': 'Smooth Jazz', 'artist': 'SoundHelix 1', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'},
+    {'title': 'Chill Beats', 'artist': 'SoundHelix 2', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'},
+    {'title': 'Retro Funk', 'artist': 'SoundHelix 3', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'},
+    {'title': 'Modern Pop', 'artist': 'SoundHelix 4', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'},
+  ];
 
   @override
   void initState() {
     super.initState();
     player.onDurationChanged.listen((d) => setState(() => duration = d));
     player.onPositionChanged.listen((p) => setState(() => position = p));
-    player.onPlayerComplete.listen((event) => setState(() => isPlaying = false));
+    // Auto-play next song when current ends
+    player.onPlayerComplete.listen((event) => nextSong());
+  }
+
+  void playCurrent() async {
+    await player.stop();
+    await player.play(UrlSource(playlist[currentIndex]['url']!));
+    setState(() => isPlaying = true);
+  }
+
+  void nextSong() {
+    if (currentIndex < playlist.length - 1) {
+      currentIndex++;
+      playCurrent();
+    }
+  }
+
+  void prevSong() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      playCurrent();
+    }
   }
 
   @override
@@ -38,48 +68,41 @@ class _DhunlyProState extends State<DhunlyPro> { // Yahan fix kiya gaya hai
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 40),
+            // Music Disk
             Center(
               child: Container(
-                width: 250, height: 250,
+                width: 220, height: 220,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.blueAccent.withOpacity(0.5), width: 8),
                   boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.2), blurRadius: 30)],
                 ),
-                child: const Icon(Icons.music_note, size: 120, color: Colors.blueAccent),
+                child: const Icon(Icons.music_note, size: 100, color: Colors.blueAccent),
               ),
             ),
-            const SizedBox(height: 50),
-            const Text("Dhunly Premium", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-            const Text("Streaming Online Track", style: TextStyle(color: Colors.white70, fontSize: 16)),
+            const SizedBox(height: 30),
+            Text(playlist[currentIndex]['title']!, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+            Text(playlist[currentIndex]['artist']!, style: const TextStyle(color: Colors.white70, fontSize: 16)),
             
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Slider(
-                activeColor: Colors.blueAccent,
-                inactiveColor: Colors.white24,
-                min: 0,
-                max: duration.inSeconds.toDouble(),
-                value: position.inSeconds.toDouble(),
-                onChanged: (value) async {
-                  final seekPosition = Duration(seconds: value.toInt());
-                  await player.seek(seekPosition);
-                },
-              ),
+            // Progress Slider
+            Slider(
+              activeColor: Colors.blueAccent,
+              inactiveColor: Colors.white24,
+              min: 0, max: duration.inSeconds.toDouble(),
+              value: position.inSeconds.toDouble(),
+              onChanged: (v) => player.seek(Duration(seconds: v.toInt())),
             ),
 
+            // Controls
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(icon: const Icon(Icons.skip_previous, size: 45, color: Colors.white), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.skip_previous, size: 45, color: Colors.white), onPressed: prevSong),
                 const SizedBox(width: 20),
                 GestureDetector(
-                  onTap: () async {
-                    if (isPlaying) {
-                      await player.pause();
-                    } else {
-                      await player.play(UrlSource('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'));
-                    }
+                  onTap: () {
+                    if (isPlaying) { player.pause(); } else { playCurrent(); }
                     setState(() => isPlaying = !isPlaying);
                   },
                   child: CircleAvatar(
@@ -88,25 +111,27 @@ class _DhunlyProState extends State<DhunlyPro> { // Yahan fix kiya gaya hai
                   ),
                 ),
                 const SizedBox(width: 20),
-                IconButton(icon: const Icon(Icons.skip_next, size: 45, color: Colors.white), onPressed: () {}),
+                IconButton(icon: const Icon(Icons.skip_next, size: 45, color: Colors.white), onPressed: nextSong),
               ],
             ),
             
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.volume_down, color: Colors.white54),
-                SizedBox(
-                  width: 150,
-                  child: Slider(
-                    value: 0.5,
-                    onChanged: (v) => player.setVolume(v),
-                    activeColor: Colors.white54,
-                  ),
-                ),
-                const Icon(Icons.volume_up, color: Colors.white54),
-              ],
+            // Playlist Preview
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: playlist.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: const Icon(Icons.music_video, color: Colors.white54),
+                    title: Text(playlist[index]['title']!, style: TextStyle(color: index == currentIndex ? Colors.blueAccent : Colors.white)),
+                    subtitle: Text(playlist[index]['artist']!, style: const TextStyle(color: Colors.white54)),
+                    onTap: () {
+                      currentIndex = index;
+                      playCurrent();
+                    },
+                  );
+                },
+              ),
             )
           ],
         ),
