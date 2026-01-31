@@ -3,20 +3,16 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Force Plugin Re-link
+      - name: Repair and Build
         script: |
-          # 1. Purana kachra saaf
+          # 1. SDK rasta setup karo
           flutter clean
-          rm -rf android/.gradle
-          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-          
-          # 2. Local properties fresh setup
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
           
-          # 3. Plugins download
+          # 2. Plugins fresh link karo
           flutter pub get
           
-          # 4. Fix gradlew permissions
+          # 3. Gradlew generate karo
           cd android
           gradle wrapper --gradle-version 8.4
           chmod +x gradlew
@@ -24,7 +20,7 @@ workflows:
           
       - name: Build APK
         script: |
-          # Bina dependency check ke seedha build
-          flutter build apk --debug --android-skip-build-dependency-validation
+          # Sabse safe command
+          flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
