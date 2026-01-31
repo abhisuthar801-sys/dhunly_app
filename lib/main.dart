@@ -1,110 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyFast()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyUltimate()));
 
-class DhunlyFast extends StatefulWidget {
-  const DhunlyFast({super.key});
+class DhunlyUltimate extends StatefulWidget {
+  const DhunlyUltimate({super.key});
   @override
-  State<DhunlyFast> createState() => _DhunlyFastState();
+  State<DhunlyUltimate> createState() => _DhunlyUltimateState();
 }
 
-class _DhunlyFastState extends State<DhunlyFast> {
+class _DhunlyUltimateState extends State<DhunlyUltimate> {
   final player = AudioPlayer();
   bool isPlaying = false;
-  String currentTitle = "Select a Song";
-  String currentArtist = "Dhunly Hits";
+  bool isLoading = false;
+  List songs = [];
+  String currentTitle = "Search your song";
 
-  // Fast Direct Links (MP3)
-  final List<Map<String, String>> onlineSongs = [
-    {
-      'title': 'Heeriye (Fast Stream)',
-      'artist': 'Arijit Singh',
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
-    },
-    {
-      'title': 'Pehle Bhi Main',
-      'artist': 'Animal',
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'
-    },
-    {
-      'title': 'Lofi Study',
-      'artist': 'Relaxing',
-      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'
-    },
-  ];
+  // Saavn API se gaane dhoondne ka function
+  Future<void> searchSongs(String query) async {
+    setState(() => isLoading = true);
+    try {
+      // Ye API fast hai aur direct high quality links deti hai
+      final response = await http.get(Uri.parse("https://saavn.dev/api/search/songs?query=$query"));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          songs = data['data']['results'];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
 
-  Future<void> playSong(String url, String title, String artist) async {
+  void playSong(String url, String title) async {
+    await player.stop();
+    // 320kbps ya 160kbps link select karna (fast loading ke liye)
+    await player.play(UrlSource(url)); 
     setState(() {
       currentTitle = title;
-      currentArtist = artist;
       isPlaying = true;
     });
-    await player.stop();
-    await player.play(UrlSource(url));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090909),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Dhunly Premium"),
-        backgroundColor: Colors.transparent,
+        title: const Text("Dhunly Search", style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blueAccent.withOpacity(0.1),
         elevation: 0,
       ),
       body: Column(
         children: [
-          // Player Card
-          Container(
-            margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Colors.blueAccent, Colors.purpleAccent]),
-              borderRadius: BorderRadius.circular(20),
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: TextField(
+              onSubmitted: (v) => searchSongs(v),
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Search: Arijit, Sidhu Moose Wala...",
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+                filled: true,
+                fillColor: Colors.white10,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+              ),
             ),
-            child: Row(
-              children: [
-                const CircleAvatar(radius: 30, child: Icon(Icons.music_note)),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(currentTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                      Text(currentArtist, style: const TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 40),
-                  onPressed: () {
-                    if (isPlaying) { player.pause(); } else { player.resume(); }
-                    setState(() => isPlaying = !isPlaying);
-                  },
-                )
-              ],
-            ),
-          ),
-          
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Align(alignment: Alignment.centerLeft, child: Text("Direct Online Songs", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
           ),
 
+          if (isLoading) const LinearProgressIndicator(color: Colors.blueAccent),
+
+          // Search Results
           Expanded(
             child: ListView.builder(
-              itemCount: onlineSongs.length,
+              itemCount: songs.length,
               itemBuilder: (context, index) {
+                var song = songs[index];
+                // Hum high quality link uthayenge
+                String streamUrl = song['downloadUrl'].last['url']; 
+                String imageUrl = song['image'].last['url'];
+
                 return ListTile(
-                  leading: const Icon(Icons.play_arrow, color: Colors.blueAccent),
-                  title: Text(onlineSongs[index]['title']!, style: const TextStyle(color: Colors.white)),
-                  subtitle: Text(onlineSongs[index]['artist']!, style: const TextStyle(color: Colors.white54)),
-                  onTap: () => playSong(onlineSongs[index]['url']!, onlineSongs[index]['title']!, onlineSongs[index]['artist']!),
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(5),
+                    child: Image.network(imageUrl, width: 50, height: 50, fit: BoxFit.cover),
+                  ),
+                  title: Text(song['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1),
+                  subtitle: Text(song['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white54)),
+                  trailing: const Icon(Icons.play_circle_outline, color: Colors.blueAccent),
+                  onTap: () => playSong(streamUrl, song['name']),
                 );
               },
             ),
-          )
+          ),
+
+          // Mini Player
+          if (isPlaying || currentTitle != "Search your song")
+            Container(
+              padding: const EdgeInsets.all(15),
+              color: Colors.blueAccent.withOpacity(0.2),
+              child: Row(
+                children: [
+                  const Icon(Icons.music_note, color: Colors.blueAccent),
+                  const SizedBox(width: 15),
+                  Expanded(child: Text(currentTitle, style: const TextStyle(color: Colors.white), maxLines: 1)),
+                  IconButton(
+                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white),
+                    onPressed: () {
+                      if (isPlaying) { player.pause(); } else { player.resume(); }
+                      setState(() => isPlaying = !isPlaying);
+                    },
+                  )
+                ],
+              ),
+            ),
         ],
       ),
     );
