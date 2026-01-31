@@ -3,17 +3,18 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Nuclear Clean
+      - name: Force Plugin Rebuild
         script: |
-          # 1. Sab delete karo jo raste mein aa raha hai
+          # 1. Purani cache aur generated Java files mitao
           flutter clean
+          rm -rf android/.gradle
           rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
           
-          # 2. Plugins fresh link karo
-          flutter pub get
-          
-          # 3. Local properties setup
+          # 2. Local properties fresh setup
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+          
+          # 3. Plugins download
+          flutter pub get
           
           # 4. Gradlew repair
           cd android
@@ -23,7 +24,7 @@ workflows:
           
       - name: Build APK
         script: |
-          # Bina dependency validation ke build, taaki wo minor warnings par na ruke
+          # Sabse safe mode mein build
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
