@@ -1,23 +1,20 @@
 workflows:
   android-workflow:
-    name: Dhunly App Build
+    name: Dhunly Simple Build
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
       flutter: stable
       java: 17
     scripts:
-      - name: Recreate Android Folder
+      - name: Create Fresh Android Project
         script: |
-          # Ye command naya android folder banayegi
-          flutter create . --platforms android
-      - name: Set up local.properties
-        script: |
-          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-      - name: Get Flutter packages
+          # Ye command bina kisi error ke naya folder banayegi
+          flutter create . --platforms android --org com.abhi.dhunly
+      - name: Get Packages
         script: |
           flutter pub get
-      - name: Build Android APK
+      - name: Build Debug APK
         script: |
           flutter build apk --debug
     artifacts:
