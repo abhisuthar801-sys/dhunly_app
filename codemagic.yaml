@@ -1,30 +1,16 @@
 workflows:
   android-workflow:
-    name: Dhunly Final Attempt
+    name: Dhunly Lite Build
     instance_type: mac_mini_m2
+    max_build_duration: 15
     scripts:
-      - name: Deep Clean and Repair
+      - name: Clean and Setup
         script: |
-          # 1. Purana kachra saaf
           flutter clean
-          rm -rf android/.gradle
-          rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-          
-          # 2. Local properties fix
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-          
-          # 3. Repair plugins cache (Time lega par zaruri hai)
           flutter pub get
-          
-          # 4. Gradle setup
-          cd android
-          gradle wrapper --gradle-version 8.4
-          chmod +x gradlew
-          cd ..
-          
-      - name: Build APK
+      - name: Build Debug APK
         script: |
-          # Bina validation ke build karo
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
