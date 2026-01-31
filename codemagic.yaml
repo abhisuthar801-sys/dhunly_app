@@ -5,21 +5,17 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
-      groups:
-        - sdk_config
+      java: 17
     scripts:
       - name: Set up local.properties
         script: |
           echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
       - name: Get Flutter packages
         script: |
+          flutter clean
           flutter pub get
       - name: Build Android APK
         script: |
           flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
-    publishing:
-      email:
-        recipients:
-          - abhisuthar801@gmail.com # Maine yahan aapki ID ke hisaab se email guess kiya hai, ise badal sakte ho.
