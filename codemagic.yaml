@@ -22,4 +22,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - YOUR_EMAIL_HERE # Yahan apni email dalo agar update chahiye
+          - abhisuthar801@gmail.com # Maine yahan aapki ID ke hisaab se email guess kiya hai, ise badal sakte ho.
