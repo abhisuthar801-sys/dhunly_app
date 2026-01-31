@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'dart:ui'; // Ye glass effect ke liye zaroori hai
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -14,7 +14,7 @@ class DhunlyGlassPro extends StatefulWidget {
 class _DhunlyGlassProState extends State<DhunlyGlassPro> {
   List songs = [];
   bool isLoading = false;
-  String currentSongName = "Abhi Kuch Nahi Baj Raha";
+  String currentSongName = "Select a Song";
   String currentImg = "https://cdn-icons-png.flaticon.com/512/3844/3844724.png";
 
   Future<void> searchSongs(String query) async {
@@ -39,22 +39,23 @@ class _DhunlyGlassProState extends State<DhunlyGlassPro> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Aesthetic Gradients
-          Positioned(top: -100, left: -50, child: _circleGradient(Colors.blueAccent)),
-          Positioned(bottom: -100, right: -50, child: _circleGradient(Colors.purpleAccent)),
+          // Background Aesthetic Colors
+          Positioned(top: -50, left: -50, child: _circleColor(Colors.blue.withOpacity(0.4))),
+          Positioned(bottom: 100, right: -50, child: _circleColor(Colors.purple.withOpacity(0.4))),
           
-          // Blur Layer
+          // The Magic Blur (Glass Effect)
           BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+            filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
             child: Container(color: Colors.transparent),
           ),
 
           SafeArea(
             child: Column(
               children: [
-                _buildHeader(),
+                const SizedBox(height: 20),
+                const Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 6)),
                 _buildSearchBar(),
-                if (isLoading) const LinearProgressIndicator(color: Colors.white, backgroundColor: Colors.transparent),
+                if (isLoading) const Padding(padding: EdgeInsets.only(top: 10), child: CircularProgressIndicator(color: Colors.white)),
                 _buildSongList(),
                 _buildMiniPlayer(),
               ],
@@ -62,38 +63,25 @@ class _DhunlyGlassProState extends State<DhunlyGlassPro> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  // --- UI WIDGETS ---
-
-  Widget _circleGradient(Color color) {
-    return Container(
-      width: 300, height: 300,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.3)),
-    );
-  }
-
-  Widget _buildHeader() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 20),
-      child: Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 8)),
-    );
+  Widget _circleColor(Color color) {
+    return Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: color));
   }
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(20),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
             child: TextField(
               onSubmitted: (v) => searchSongs(v),
@@ -103,7 +91,7 @@ class _DhunlyGlassProState extends State<DhunlyGlassPro> {
                 hintStyle: TextStyle(color: Colors.white38),
                 prefixIcon: Icon(Icons.search, color: Colors.white70),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 15),
+                contentPadding: EdgeInsets.all(15),
               ),
             ),
           ),
@@ -115,24 +103,20 @@ class _DhunlyGlassProState extends State<DhunlyGlassPro> {
   Widget _buildSongList() {
     return Expanded(
       child: ListView.builder(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: songs.length,
         itemBuilder: (context, index) {
           var song = songs[index];
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
+            margin: const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(15),
             ),
             child: ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.network(song['image'].last['url']),
-              ),
-              title: Text(song['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-              subtitle: Text(song['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white38, fontSize: 12)),
-              trailing: const Icon(Icons.more_vert, color: Colors.white38),
+              leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(song['image'].last['url'])),
+              title: Text(song['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1),
+              subtitle: Text(song['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
               onTap: () => setState(() {
                 currentSongName = song['name'];
                 currentImg = song['image'].last['url'];
@@ -145,42 +129,24 @@ class _DhunlyGlassProState extends State<DhunlyGlassPro> {
   }
 
   Widget _buildMiniPlayer() {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
-              const SizedBox(width: 15),
-              Expanded(child: Text(currentSongName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1)),
-              const Icon(Icons.favorite_border, color: Colors.white70),
-              const SizedBox(width: 20),
-              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 40),
-            ],
-          ),
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
+            const SizedBox(width: 15),
+            Expanded(child: Text(currentSongName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600), maxLines: 1)),
+            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 40),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      backgroundColor: Colors.black,
-      selectedItemColor: Colors.blueAccent,
-      unselectedItemColor: Colors.white38,
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: ""),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
-        BottomNavigationBarItem(icon: Icon(Icons.library_music), label: ""),
-      ],
     );
   }
 }
