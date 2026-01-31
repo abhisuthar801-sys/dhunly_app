@@ -1,99 +1,118 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-void main() {
-  runApp(const DhunlyApp());
-}
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyPro()));
 
-class DhunlyApp extends StatelessWidget {
-  const DhunlyApp({super.key});
-
+class DhunlyPro extends StatefulWidget {
+  const DhunlyPro({super.key});
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: const PlayerPage(),
-    );
-  }
+  State<DhunlyPro> createState() => _DhunlyProState();
 }
 
-class PlayerPage extends StatefulWidget {
-  const PlayerPage({super.key});
-
-  @override
-  State<PlayerPage> createState() => _PlayerPageState();
-}
-
-class _PlayerPageState extends State<PlayerPage> {
+class _PlayerPageState extends State<DhunlyPro> {
   final player = AudioPlayer();
   bool isPlaying = false;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    // Gaane ki duration aur current position track karne ke liye
+    player.onDurationChanged.listen((d) => setState(() => duration = d));
+    player.onPositionChanged.listen((p) => setState(() => position = p));
+    player.onPlayerComplete.listen((event) => setState(() => isPlaying = false));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0F0F1E),
       body: Container(
-        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1e3c72), Color(0xFF2a5298), Colors.black],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App Logo or Music Icon
-            Container(
-              height: 200,
-              width: 200,
-              decoration: BoxDecoration(
-                color: Colors.white10,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: const Icon(Icons.music_note, size: 100, color: Colors.blueAccent),
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              'Dhunly Premium',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const Text(
-              'Now Playing: Your Favorite Track',
-              style: TextStyle(fontSize: 16, color: Colors.white70),
-            ),
-            const SizedBox(height: 60),
-            // Play/Pause Button
-            GestureDetector(
-              onTap: () async {
-                if (isPlaying) {
-                  await player.pause();
-                } else {
-                  await player.play(UrlSource('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'));
-                }
-                setState(() {
-                  isPlaying = !isPlaying;
-                });
-              },
+            // Music Disk Decor
+            Center(
               child: Container(
-                height: 80,
-                width: 80,
-                decoration: const BoxDecoration(
-                  color: Colors.blueAccent,
+                width: 250, height: 250,
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: Colors.blueAccent, blurRadius: 20, spreadRadius: 2),
-                  ],
+                  border: Border.all(color: Colors.blueAccent.withOpacity(0.5), width: 8),
+                  boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.2), blurRadius: 30)],
                 ),
-                child: Icon(
-                  isPlaying ? Icons.pause : Icons.play_arrow,
-                  size: 50,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.music_note, size: 120, color: Colors.blueAccent),
               ),
             ),
+            const SizedBox(height: 50),
+            const Text("Dhunly Premium", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            const Text("Streaming Online Track", style: TextStyle(color: Colors.white70, fontSize: 16)),
+            
+            // Progress Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Slider(
+                activeColor: Colors.blueAccent,
+                inactiveColor: Colors.white24,
+                min: 0,
+                max: duration.inSeconds.toDouble(),
+                value: position.inSeconds.toDouble(),
+                onChanged: (value) async {
+                  final position = Duration(seconds: value.toInt());
+                  await player.seek(position);
+                },
+              ),
+            ),
+
+            // Play/Pause Control
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(icon: const Icon(Icons.skip_previous, size: 45, color: Colors.white), onPressed: () {}),
+                const SizedBox(width: 20),
+                GestureDetector(
+                  onTap: () async {
+                    if (isPlaying) {
+                      await player.pause();
+                    } else {
+                      await player.play(UrlSource('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'));
+                    }
+                    setState(() => isPlaying = !isPlaying);
+                  },
+                  child: CircleAvatar(
+                    radius: 40, backgroundColor: Colors.blueAccent,
+                    child: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 50, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                IconButton(icon: const Icon(Icons.skip_next, size: 45, color: Colors.white), onPressed: () {}),
+              ],
+            ),
+            
+            // Volume Slider
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.volume_down, color: Colors.white54),
+                SizedBox(
+                  width: 150,
+                  child: Slider(
+                    value: 0.5,
+                    onChanged: (v) => player.setVolume(v),
+                    activeColor: Colors.white54,
+                  ),
+                ),
+                const Icon(Icons.volume_up, color: Colors.white54),
+              ],
+            )
           ],
         ),
       ),
