@@ -5,7 +5,7 @@ workflows:
     scripts:
       - name: Force Plugin Re-link
         script: |
-          # 1. Sab kachra saaf karo
+          # 1. Purana kachra saaf
           flutter clean
           rm -rf android/.gradle
           rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
@@ -16,7 +16,7 @@ workflows:
           # 3. Plugins download
           flutter pub get
           
-          # 4. Gradlew fix
+          # 4. Fix gradlew permissions
           cd android
           gradle wrapper --gradle-version 8.4
           chmod +x gradlew
@@ -24,7 +24,7 @@ workflows:
           
       - name: Build APK
         script: |
-          # Is baar plugins compile hongi hi hongi
+          # Bina dependency check ke seedha build
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
