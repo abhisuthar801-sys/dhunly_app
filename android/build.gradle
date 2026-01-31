@@ -1,13 +1,12 @@
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext.kotlin_version = '1.9.0' // Version badha diya
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        // Ye line error de rahi thi, ise humne fix kar diya hai
-        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath 'com.android.tools.build:gradle:7.4.2' // Stable version
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
