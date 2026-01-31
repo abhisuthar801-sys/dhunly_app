@@ -3,9 +3,9 @@ workflows:
     name: Dhunly Final Success
     instance_type: mac_mini_m2
     scripts:
-      - name: Force Plugin Rebuild
+      - name: Force Plugin Re-link
         script: |
-          # 1. Purani cache aur generated Java files mitao
+          # 1. Sab kachra saaf karo
           flutter clean
           rm -rf android/.gradle
           rm -rf android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
@@ -16,7 +16,7 @@ workflows:
           # 3. Plugins download
           flutter pub get
           
-          # 4. Gradlew repair
+          # 4. Gradlew fix
           cd android
           gradle wrapper --gradle-version 8.4
           chmod +x gradlew
@@ -24,7 +24,7 @@ workflows:
           
       - name: Build APK
         script: |
-          # Sabse safe mode mein build
+          # Is baar plugins compile hongi hi hongi
           flutter build apk --debug --android-skip-build-dependency-validation
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
