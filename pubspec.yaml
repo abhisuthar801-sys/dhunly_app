@@ -1,6 +1,39 @@
+name: dhunly_app
+description: "A premium glassmorphism music streaming app."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
+
+  # Audio bajane ke liye (Engine)
   audioplayers: ^5.2.1
+
+  # Internet se gaane aur data lane ke liye
   http: ^1.1.0
-  # Isse blur effect smooth aayega
+
+  # Glass look aur blur effects ke liye
+  glass: ^1.1.0
+  
+  # Image caching ke liye (taaki photos baar baar load na hon)
+  cached_network_image: ^3.3.0
+
+  # Aesthetic icons ke liye
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Agar aap koi local font ya logo add karna chahen
+  # assets:
+  #   - assets/
