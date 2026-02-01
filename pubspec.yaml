@@ -11,21 +11,15 @@ dependencies:
     sdk: flutter
   audioplayers: ^5.2.1
   http: ^1.1.0
+  cupertino_icons: ^1.0.6
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # Logo generator tool
-  flutter_launcher_icons: "^0.13.1"
-
-# Android Launcher Icon Settings
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/logo.png"
 
 flutter:
   uses-material-design: true
 
-  # YAHAN DHYAN DENA: In spaces ko mat chhedna
+  # Yahan dhyan dena: assets folder aur photo ka rasta
   assets:
     - assets/logo.png
