@@ -4,59 +4,59 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyPro()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyYT()));
 
-class DhunlyPro extends StatefulWidget {
-  const DhunlyPro({super.key});
+class DhunlyYT extends StatefulWidget {
+  const DhunlyYT({super.key});
   @override
-  State<DhunlyPro> createState() => _DhunlyProState();
+  State<DhunlyYT> createState() => _DhunlyYTState();
 }
 
-class _DhunlyProState extends State<DhunlyPro> {
+class _DhunlyYTState extends State<DhunlyYT> {
   final AudioPlayer _player = AudioPlayer();
   List songs = [];
   bool isLoading = false;
   bool isPlaying = false;
-  
-  Duration _duration = Duration.zero;
-  Duration _position = Duration.zero;
-
-  String currentSong = "Dhunly Premium";
+  String currentSong = "Search Any Song";
   String currentImg = "https://cdn-icons-png.flaticon.com/512/3844/3844724.png";
 
-  @override
-  void initState() {
-    super.initState();
-    // Seekbar Logic: Gaane ka time update karne ke liye
-    _player.onDurationChanged.listen((d) => setState(() => _duration = d));
-    _player.onPositionChanged.listen((p) => setState(() => _position = p));
-  }
-
-  Future<void> searchMusic(String query) async {
+  // --- NEW YOUTUBE HYBRID SEARCH ---
+  Future<void> searchYT(String query) async {
     setState(() => isLoading = true);
     try {
-      final res = await http.get(Uri.parse("https://saavn.dev/api/search/songs?query=$query&limit=15"));
+      // Hum is open-source YouTube Search link ka use karenge
+      final res = await http.get(Uri.parse("https://pipedapi.kavin.rocks/search?q=$query&filter=videos"));
       if (res.statusCode == 200) {
+        var data = json.decode(res.body);
         setState(() {
-          songs = json.decode(res.body)['data']['results'];
+          songs = data['items']; // YouTube results
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() => isLoading = false);
+      print("Error: $e");
     }
   }
 
-  void playMusic(var s) async {
+  void playYT(String videoId, String title, String img) async {
+    // Hum direct stream link generate karenge
+    String streamUrl = "https://pipedapi.kavin.rocks/streams/$videoId";
     try {
+      final res = await http.get(Uri.parse(streamUrl));
+      var data = json.decode(res.body);
+      String audioUrl = data['audioStreams'][0]['url']; // High quality audio
+
       await _player.stop();
-      await _player.play(UrlSource(s['downloadUrl'].last['url']));
+      await _player.play(UrlSource(audioUrl));
       setState(() {
-        currentSong = s['name'];
-        currentImg = s['image'].last['url'];
+        currentSong = title;
+        currentImg = img;
         isPlaying = true;
       });
-    } catch (e) { print(e); }
+    } catch (e) {
+      print("Play Error: $e");
+    }
   }
 
   @override
@@ -65,19 +65,18 @@ class _DhunlyProState extends State<DhunlyPro> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Glass Effect Background
-          Positioned(top: -50, left: -50, child: _orb(Colors.blueAccent)),
-          Positioned(bottom: -50, right: -50, child: _orb(Colors.purpleAccent)),
-          BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
-
+          _background(),
           SafeArea(
             child: Column(
               children: [
-                _header(),
-                _searchField(),
-                if (isLoading) const LinearProgressIndicator(),
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text("DHUNLY PRO", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 5)),
+                ),
+                _searchBar(),
+                if (isLoading) const LinearProgressIndicator(color: Colors.redAccent),
                 _songList(),
-                _premiumPlayer(),
+                _bottomPlayer(),
               ],
             ),
           ),
@@ -86,24 +85,22 @@ class _DhunlyProState extends State<DhunlyPro> {
     );
   }
 
-  Widget _orb(Color c) => Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: c.withOpacity(0.3)));
+  Widget _background() => Stack(children: [
+    Positioned(top: -50, left: -50, child: Container(width: 300, height: 300, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.redAccent))),
+    BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container(color: Colors.transparent)),
+  ]);
 
-  Widget _header() => const Padding(
-    padding: EdgeInsets.all(20),
-    child: Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 8)),
-  );
-
-  Widget _searchField() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
+  Widget _searchBar() => Padding(
+    padding: const EdgeInsets.all(20),
     child: TextField(
-      onSubmitted: (v) => searchMusic(v),
+      onSubmitted: (v) => searchYT(v),
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
+        hintText: "Search YouTube Music...",
+        hintStyle: const TextStyle(color: Colors.white38),
         filled: true,
         fillColor: Colors.white10,
-        hintText: "Artist, Song or Mood...",
-        hintStyle: const TextStyle(color: Colors.white30),
-        prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+        prefixIcon: const Icon(Icons.search, color: Colors.redAccent),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
       ),
     ),
@@ -112,42 +109,37 @@ class _DhunlyProState extends State<DhunlyPro> {
   Widget _songList() => Expanded(
     child: ListView.builder(
       itemCount: songs.length,
-      itemBuilder: (context, i) => ListTile(
-        leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(songs[i]['image'].last['url'])),
-        title: Text(songs[i]['name'], style: const TextStyle(color: Colors.white)),
-        onTap: () => playMusic(songs[i]),
-      ),
+      itemBuilder: (context, i) {
+        var s = songs[i];
+        return ListTile(
+          leading: Image.network(s['thumbnail'], width: 50, fit: BoxFit.cover),
+          title: Text(s['title'], style: const TextStyle(color: Colors.white, fontSize: 14), maxLines: 1),
+          subtitle: Text(s['uploaderName'] ?? "YouTube", style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          onTap: () {
+            // Video ID se URL nikalne ke liye extract karna
+            String vId = s['url'].split("=")[1];
+            playYT(vId, s['title'], s['thumbnail']);
+          },
+        );
+      },
     ),
   );
 
-  Widget _premiumPlayer() => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: const BorderRadius.vertical(top: Radius.circular(30))),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
+  Widget _bottomPlayer() => Container(
+    padding: const EdgeInsets.all(15),
+    color: Colors.white10,
+    child: Row(
       children: [
-        // Seekbar Feature
-        Slider(
-          activeColor: Colors.blueAccent,
-          inactiveColor: Colors.white24,
-          value: _position.inSeconds.toDouble(),
-          max: _duration.inSeconds.toDouble(),
-          onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
-        ),
-        Row(
-          children: [
-            CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
-            const SizedBox(width: 15),
-            Expanded(child: Text(currentSong, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1)),
-            IconButton(
-              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 40),
-              onPressed: () {
-                if (isPlaying) _player.pause(); else _player.resume();
-                setState(() => isPlaying = !isPlaying);
-              },
-            ),
-          ],
-        ),
+        CircleAvatar(backgroundImage: NetworkImage(currentImg)),
+        const SizedBox(width: 15),
+        Expanded(child: Text(currentSong, style: const TextStyle(color: Colors.white), maxLines: 1)),
+        IconButton(
+          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 35),
+          onPressed: () {
+            if (isPlaying) _player.pause(); else _player.resume();
+            setState(() => isPlaying = !isPlaying);
+          },
+        )
       ],
     ),
   );
