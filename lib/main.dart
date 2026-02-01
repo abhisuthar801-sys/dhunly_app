@@ -25,8 +25,8 @@ class _DhunlyGlassAppState extends State<DhunlyGlassApp> {
   bool isPlaying = false;
 
   String currentTitle = "Dhunly Pro";
-  String currentArtist = "Premium Cloud Music";
-  String currentImg = "assets/logo.png"; // Aapka logo
+  String currentArtist = "Premium Music Experience";
+  String currentImg = "assets/logo.png"; 
 
   @override
   void initState() {
@@ -57,33 +57,59 @@ class _DhunlyGlassAppState extends State<DhunlyGlassApp> {
     });
   }
 
-  void search(String query) {
-    setState(() {
-      filteredSongs = allSongs.where((s) => s['title'].toLowerCase().contains(query.toLowerCase())).toList();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000),
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Color Glow
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent.withOpacity(0.2), boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.2), blurRadius: 100)])),
-          ),
+          Positioned(top: -50, right: -50, child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent.withOpacity(0.15)))),
           SafeArea(
             child: Column(
               children: [
-                _buildHeader(),
-                _buildSearch(),
-                _buildCategories(),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Image.asset("assets/logo.png", height: 40, errorBuilder: (c, e, s) => const Icon(Icons.music_note, color: Colors.blueAccent)),
+                      const SizedBox(width: 15),
+                      const Text("DHUNLY PRO", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                    ],
+                  ),
+                ),
+                // Categories
+                SizedBox(
+                  height: 50,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: ["All", "Punjabi", "Sad", "Lofi"].map((cat) => Padding(
+                      padding: const EdgeInsets.only(left: 15),
+                      child: ActionChip(
+                        label: Text(cat),
+                        backgroundColor: selectedCat == cat ? Colors.blueAccent : Colors.white10,
+                        onPressed: () => filterByCategory(cat),
+                        labelStyle: const TextStyle(color: Colors.white),
+                      ),
+                    )).toList(),
+                  ),
+                ),
                 if (isLoading) const Expanded(child: Center(child: CircularProgressIndicator(color: Colors.blueAccent))),
-                if (!isLoading) _buildSongList(),
-                _buildGlassPlayer(),
+                if (!isLoading) Expanded(
+                  child: ListView.builder(
+                    itemCount: filteredSongs.length,
+                    itemBuilder: (context, i) => ListTile(
+                      leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(filteredSongs[i]['img'], width: 50, height: 50, fit: BoxFit.cover)),
+                      title: Text(filteredSongs[i]['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      subtitle: Text(filteredSongs[i]['artist'], style: const TextStyle(color: Colors.white54)),
+                      onTap: () {
+                        _player.play(UrlSource(filteredSongs[i]['url']));
+                        setState(() { currentTitle = filteredSongs[i]['title']; currentArtist = filteredSongs[i]['artist']; isPlaying = true; });
+                      },
+                    ),
+                  ),
+                ),
+                // Glass Player
+                if (isPlaying || !isLoading) _buildMiniPlayer(),
               ],
             ),
           ),
@@ -92,108 +118,18 @@ class _DhunlyGlassAppState extends State<DhunlyGlassApp> {
     );
   }
 
-  Widget _buildHeader() => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Image.asset("assets/logo.png", height: 45, errorBuilder: (c, e, s) => const Icon(Icons.play_circle_fill, color: Colors.blueAccent, size: 45)),
-            const SizedBox(width: 15),
-            const Text("DHUNLY PRO", style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 2)),
-          ],
-        ),
-      );
-
-  Widget _buildSearch() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: TextField(
-              onChanged: (v) => search(v),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Search Songs...",
-                hintStyle: const TextStyle(color: Colors.white38),
-                prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-        ),
-      );
-
-  Widget _buildCategories() {
-    List<String> tags = ["All", "Punjabi", "Sad", "Lofi", "Party"];
-    return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: tags.length,
-        itemBuilder: (context, i) => GestureDetector(
-          onTap: () => filterByCategory(tags[i]),
-          child: Container(
-            margin: const EdgeInsets.only(left: 20),
-            padding: const EdgeInsets.symmetric(horizontal: 25),
-            decoration: BoxDecoration(
-              color: selectedCat == tags[i] ? Colors.blueAccent : Colors.white10,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Center(child: Text(tags[i], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSongList() => Expanded(
-        child: ListView.builder(
-          itemCount: filteredSongs.length,
-          itemBuilder: (context, i) => ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-            leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(filteredSongs[i]['img'], width: 55, height: 55, fit: BoxFit.cover)),
-            title: Text(filteredSongs[i]['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            subtitle: Text(filteredSongs[i]['artist'], style: const TextStyle(color: Colors.white38)),
-            trailing: const Icon(Icons.play_circle_outline, color: Colors.white24),
-            onTap: () {
-              _player.play(UrlSource(filteredSongs[i]['url']));
-              setState(() {
-                currentTitle = filteredSongs[i]['title'];
-                currentArtist = filteredSongs[i]['artist'];
-                isPlaying = true;
-              });
-            },
-          ),
-        ),
-      );
-
-  Widget _buildGlassPlayer() => ClipRRect(
+  Widget _buildMiniPlayer() => ClipRRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
-            height: 90,
             padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), border: Border(top: BorderSide(color: Colors.white10))),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), border: Border(top: BorderSide(color: Colors.white10))),
             child: Row(
               children: [
-                CircleAvatar(backgroundImage: const AssetImage("assets/logo.png"), radius: 30),
+                const CircleAvatar(backgroundImage: AssetImage("assets/logo.png"), radius: 25),
                 const SizedBox(width: 15),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text(currentTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1),
-                    Text(currentArtist, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                  ]),
-                ),
-                IconButton(
-                  icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.blueAccent, size: 50),
-                  onPressed: () {
-                    isPlaying ? _player.pause() : _player.resume();
-                    setState(() => isPlaying = !isPlaying);
-                  },
-                ),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(currentTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text(currentArtist, style: const TextStyle(color: Colors.white54, fontSize: 12))])),
+                IconButton(icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.blueAccent, size: 40), onPressed: () { isPlaying ? _player.pause() : _player.resume(); setState(() => isPlaying = !isPlaying); }),
               ],
             ),
           ),
