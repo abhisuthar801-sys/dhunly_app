@@ -1,55 +1,56 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyFinalApp()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyDirectApp()));
 
-class DhunlyFinalApp extends StatefulWidget {
-  const DhunlyFinalApp({super.key});
+class DhunlyDirectApp extends StatefulWidget {
+  const DhunlyDirectApp({super.key});
   @override
-  State<DhunlyFinalApp> createState() => _DhunlyFinalAppState();
+  State<DhunlyDirectApp> createState() => _DhunlyDirectAppState();
 }
 
-class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
+class _DhunlyDirectAppState extends State<DhunlyDirectApp> {
   final AudioPlayer _player = AudioPlayer();
-  List songs = [];
-  bool isLoading = false;
   bool isPlaying = false;
-  String currentSong = "Ab Bajega Gaana!";
+  String currentSong = "Select a Vibe";
   String currentImg = "https://cdn-icons-png.flaticon.com/512/3844/3844724.png";
 
-  // --- Real Search Engine ---
-  Future<void> searchMusic(String query) async {
-    setState(() => isLoading = true);
-    try {
-      // Direct Saavn API with fallback
-      final res = await http.get(Uri.parse("https://saavn.dev/api/search/songs?query=$query&limit=15"));
-      if (res.statusCode == 200) {
-        setState(() {
-          songs = json.decode(res.body)['data']['results'];
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
+  // --- YE LINKS GOOGLE AUR MUSIC SERVERS SE HAIN (Hamesha Chalenge) ---
+  final List<Map<String, String>> superHits = [
+    {
+      'name': 'Soft Instrumental',
+      'artist': 'Relax Mode',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      'img': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'
+    },
+    {
+      'name': 'Night Vibe',
+      'artist': 'Lofi Dhunly',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      'img': 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=300'
+    },
+    {
+      'name': 'Deep Bass',
+      'artist': 'Dhunly Special',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      'img': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300'
     }
-  }
+  ];
 
-  void playMusic(var s) async {
+  // Ye function gaana bajane ke liye hai
+  void play(String url, String name, String img) async {
     try {
-      // 100% Working Link Selection
-      String streamUrl = s['downloadUrl'].last['url']; 
       await _player.stop();
-      await _player.play(UrlSource(streamUrl));
+      // Yahan hum direct MP3 source hit kar rahe hain
+      await _player.play(UrlSource(url));
       setState(() {
-        currentSong = s['name'];
-        currentImg = s['image'].last['url'];
+        currentSong = name;
+        currentImg = img;
         isPlaying = true;
       });
     } catch (e) {
-      print("Error: $e");
+      print("Audio Error: $e");
     }
   }
 
@@ -59,15 +60,48 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          _glassBackground(),
+          // Glass Aesthetic
+          Positioned(top: -50, left: -50, child: _orb(Colors.blue.withOpacity(0.3))),
+          Positioned(bottom: -50, right: -50, child: _orb(Colors.purple.withOpacity(0.3))),
+          BackdropFilter(filter: ImageFilter.blur(sigmaX: 90, sigmaY: 90), child: Container(color: Colors.transparent)),
+
           SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _header(),
-                _searchBar(),
-                if (isLoading) const LinearProgressIndicator(color: Colors.blueAccent),
-                _songList(),
-                _floatingPlayer(),
+                const Padding(
+                  padding: EdgeInsets.all(25),
+                  child: Text("DHUNLY PRO", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 5)),
+                ),
+                
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 25),
+                  child: Text("All-Time Hits (Online)", style: TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: superHits.length,
+                    itemBuilder: (context, i) {
+                      var s = superHits[i];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 15),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white10)),
+                        child: ListTile(
+                          leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(s['img']!, width: 50, height: 50, fit: BoxFit.cover)),
+                          title: Text(s['name']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          subtitle: Text(s['artist']!, style: const TextStyle(color: Colors.white54)),
+                          trailing: const Icon(Icons.play_circle_fill, color: Colors.blueAccent, size: 35),
+                          onTap: () => play(s['url']!, s['name']!, s['img']!),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Premium Glass Mini Player
+                _miniPlayer(),
               ],
             ),
           ),
@@ -76,67 +110,30 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
     );
   }
 
-  Widget _glassBackground() => Stack(children: [
-    Positioned(top: -50, left: -50, child: _orb(Colors.blueAccent)),
-    Positioned(bottom: -50, right: -50, child: _orb(Colors.purpleAccent)),
-    BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
-  ]);
+  Widget _orb(Color c) => Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: c));
 
-  Widget _orb(Color c) => Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: c.withOpacity(0.4)));
-
-  Widget _header() => const Padding(
-    padding: EdgeInsets.all(20),
-    child: Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 8)),
-  );
-
-  Widget _searchBar() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: TextField(
-      onSubmitted: (v) => searchMusic(v),
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white10,
-        hintText: "Sidhu Moose Wala, Arijit Singh...",
-        hintStyle: const TextStyle(color: Colors.white38),
-        prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+  Widget _miniPlayer() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        border: Border.all(color: Colors.white10),
       ),
-    ),
-  );
-
-  Widget _songList() => Expanded(
-    child: ListView.builder(
-      itemCount: songs.length,
-      padding: const EdgeInsets.all(15),
-      itemBuilder: (context, index) {
-        var s = songs[index];
-        return ListTile(
-          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(s['image'].last['url'])),
-          title: Text(s['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          subtitle: Text(s['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white54)),
-          onTap: () => playMusic(s),
-        );
-      },
-    ),
-  );
-
-  Widget _floatingPlayer() => Container(
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), border: const Border(top: BorderSide(color: Colors.white10))),
-    child: Row(
-      children: [
-        CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
-        const SizedBox(width: 15),
-        Expanded(child: Text(currentSong, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1)),
-        IconButton(
-          icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 45),
-          onPressed: () {
-            if (isPlaying) _player.pause(); else _player.resume();
-            setState(() => isPlaying = !isPlaying);
-          },
-        ),
-      ],
-    ),
-  );
+      child: Row(
+        children: [
+          CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
+          const SizedBox(width: 15),
+          Expanded(child: Text(currentSong, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1)),
+          IconButton(
+            icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white, size: 45),
+            onPressed: () {
+              if (isPlaying) _player.pause(); else _player.resume();
+              setState(() => isPlaying = !isPlaying);
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
