@@ -2,23 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:ui';
 
 void main() => runApp(MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: ThemeData.dark(),
-  home: SpotifyClone(),
-));
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: DhunlyApp(),
+    ));
 
-class SpotifyClone extends StatefulWidget {
+class DhunlyApp extends StatefulWidget {
   @override
-  _SpotifyCloneState createState() => _SpotifyCloneState();
+  _DhunlyAppState createState() => _DhunlyAppState();
 }
 
-class _SpotifyCloneState extends State<SpotifyClone> {
+class _DhunlyAppState extends State<DhunlyApp> {
   final AudioPlayer _player = AudioPlayer();
   List songs = [];
-  List filtered = [];
+  List filteredSongs = [];
   bool isLoading = true;
   var currentSong;
   bool isPlaying = false;
@@ -35,8 +34,7 @@ class _SpotifyCloneState extends State<SpotifyClone> {
       if (res.statusCode == 200) {
         setState(() {
           songs = json.decode(res.body)['songs'];
-          filtered = songs;
-          currentSong = songs[0];
+          filteredSongs = songs;
           isLoading = false;
         });
       }
@@ -49,99 +47,71 @@ class _SpotifyCloneState extends State<SpotifyClone> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: isLoading 
-          ? Center(child: CircularProgressIndicator(color: Colors.green))
-          : Stack(
-              children: [
-                _buildBody(),
-                if (currentSong != null) _buildMiniPlayer(),
-              ],
-            ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  Widget _buildBody() {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Image.asset('assets/logo.png', height: 40), // AAPKA NAYA LOGO
+        centerTitle: true,
+      ),
+      body: Column(
         children: [
           Padding(
-            padding: EdgeInsets.all(20),
-            child: Text("Good Evening", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          ),
-          _buildSearchBar(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filtered.length,
-              itemBuilder: (context, i) => ListTile(
-                leading: Image.network(filtered[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
-                title: Text(filtered[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(filtered[i]['artist']),
-                onTap: () {
-                  _player.play(UrlSource(filtered[i]['url']));
-                  setState(() { currentSong = filtered[i]; isPlaying = true; });
-                },
+            padding: EdgeInsets.all(10),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "Search Songs...",
+                prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
+                filled: true,
+                fillColor: Colors.white10,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
+              onChanged: (v) {
+                setState(() => filteredSongs = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList());
+              },
             ),
           ),
+          isLoading 
+            ? Expanded(child: Center(child: CircularProgressIndicator())) 
+            : Expanded(
+                child: ListView.builder(
+                  itemCount: filteredSongs.length,
+                  itemBuilder: (context, i) => ListTile(
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: Image.network(filteredSongs[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
+                    ),
+                    title: Text(filteredSongs[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(filteredSongs[i]['artist']),
+                    onTap: () {
+                      _player.play(UrlSource(filteredSongs[i]['url']));
+                      setState(() { currentSong = filteredSongs[i]; isPlaying = true; });
+                    },
+                  ),
+                ),
+              ),
+          if (currentSong != null) _miniPlayer(),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: TextField(
-        onChanged: (v) {
-          setState(() => filtered = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList());
-        },
-        decoration: InputDecoration(
-          hintText: "Search songs, artists...",
-          prefixIcon: Icon(Icons.search),
-          fillColor: Colors.white10,
-          filled: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMiniPlayer() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 65,
-        color: Colors.grey[900],
-        child: ListTile(
-          leading: Image.network(currentSong['img']),
-          title: Text(currentSong['title']),
-          trailing: IconButton(
+  Widget _miniPlayer() {
+    return Container(
+      color: Colors.blueAccent.withOpacity(0.8),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: Row(
+        children: [
+          Image.network(currentSong['img'], width: 40, height: 40),
+          SizedBox(width: 10),
+          Expanded(child: Text(currentSong['title'], overflow: TextOverflow.ellipsis)),
+          IconButton(
             icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
             onPressed: () {
               isPlaying ? _player.pause() : _player.resume();
               setState(() => isPlaying = !isPlaying);
             },
-          ),
-        ),
+          )
+        ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      backgroundColor: Colors.black,
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-        BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Library"),
-      ],
     );
   }
 }
