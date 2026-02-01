@@ -2,21 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:ui';
 
 void main() => runApp(MaterialApp(
   debugShowCheckedModeBanner: false,
   theme: ThemeData.dark(),
-  home: DhunlyFinal(),
+  home: SpotifyClone(),
 ));
 
-class DhunlyFinal extends StatefulWidget {
+class SpotifyClone extends StatefulWidget {
   @override
-  _DhunlyFinalState createState() => _DhunlyFinalState();
+  _SpotifyCloneState createState() => _SpotifyCloneState();
 }
 
-class _DhunlyFinalState extends State<DhunlyFinal> {
+class _SpotifyCloneState extends State<SpotifyClone> {
   final AudioPlayer _player = AudioPlayer();
   List songs = [];
+  List filtered = [];
   bool isLoading = true;
   var currentSong;
   bool isPlaying = false;
@@ -24,27 +26,22 @@ class _DhunlyFinalState extends State<DhunlyFinal> {
   @override
   void initState() {
     super.initState();
-    loadData();
+    fetchMusic();
   }
 
-  // YE HAI ASLI CHEEZ: Internet se gaane khinchne wala logic
-  Future<void> loadData() async {
+  Future<void> fetchMusic() async {
     try {
       final res = await http.get(Uri.parse("https://api.jsonsilo.com/public/69094396-e176-474c-8302-3866d56d788e"));
       if (res.statusCode == 200) {
-        var data = json.decode(res.body);
         setState(() {
-          songs = data['songs'];
+          songs = json.decode(res.body)['songs'];
+          filtered = songs;
           currentSong = songs[0];
           isLoading = false;
         });
       }
     } catch (e) {
-      // Agar internet nahi chala toh ye 1 gaana dikhayega
-      setState(() {
-        songs = [{"title": "Internet Connection Error", "artist": "Check Wi-Fi", "img": "https://i.imgur.com/S6Mv7X9.png", "url": ""}];
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -52,45 +49,99 @@ class _DhunlyFinalState extends State<DhunlyFinal> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: Text("DHUNLY PRO", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2)), backgroundColor: Colors.black, centerTitle: true),
       body: isLoading 
-        ? Center(child: CircularProgressIndicator(color: Colors.green)) 
-        : Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: songs.length,
-                  itemBuilder: (context, i) => ListTile(
-                    leading: Image.network(songs[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
-                    title: Text(songs[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(songs[i]['artist']),
-                    onTap: () async {
-                      await _player.stop();
-                      await _player.play(UrlSource(songs[i]['url']));
-                      setState(() { currentSong = songs[i]; isPlaying = true; });
-                    },
-                  ),
-                ),
-              ),
-              if (currentSong != null) _miniPlayer(),
-            ],
-          ),
+          ? Center(child: CircularProgressIndicator(color: Colors.green))
+          : Stack(
+              children: [
+                _buildBody(),
+                if (currentSong != null) _buildMiniPlayer(),
+              ],
+            ),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _miniPlayer() => Container(
-    padding: EdgeInsets.all(10),
-    color: Colors.blueGrey[900],
-    child: Row(
-      children: [
-        Image.network(currentSong['img'], width: 40, height: 40),
-        SizedBox(width: 15),
-        Expanded(child: Text(currentSong['title'])),
-        IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () {
-          isPlaying ? _player.pause() : _player.resume();
-          setState(() => isPlaying = !isPlaying);
-        })
+  Widget _buildBody() {
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(20),
+            child: Text("Good Evening", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          ),
+          _buildSearchBar(),
+          Expanded(
+            child: ListView.builder(
+              itemCount: filtered.length,
+              itemBuilder: (context, i) => ListTile(
+                leading: Image.network(filtered[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
+                title: Text(filtered[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(filtered[i]['artist']),
+                onTap: () {
+                  _player.play(UrlSource(filtered[i]['url']));
+                  setState(() { currentSong = filtered[i]; isPlaying = true; });
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      child: TextField(
+        onChanged: (v) {
+          setState(() => filtered = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList());
+        },
+        decoration: InputDecoration(
+          hintText: "Search songs, artists...",
+          prefixIcon: Icon(Icons.search),
+          fillColor: Colors.white10,
+          filled: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniPlayer() {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        height: 65,
+        color: Colors.grey[900],
+        child: ListTile(
+          leading: Image.network(currentSong['img']),
+          title: Text(currentSong['title']),
+          trailing: IconButton(
+            icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+            onPressed: () {
+              isPlaying ? _player.pause() : _player.resume();
+              setState(() => isPlaying = !isPlaying);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return BottomNavigationBar(
+      backgroundColor: Colors.black,
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.grey,
+      type: BottomNavigationBarType.fixed,
+      items: [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+        BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Library"),
       ],
-    ),
-  );
+    );
+  }
 }
