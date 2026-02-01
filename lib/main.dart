@@ -1,44 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:ui';
 
-void main() => runApp(const MaterialApp(
+void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SpotifyProMax(),
+      theme: ThemeData.dark(),
+      home: DhunlyMasterApp(),
     ));
 
-class SpotifyProMax extends StatefulWidget {
-  const SpotifyProMax({super.key});
+class DhunlyMasterApp extends StatefulWidget {
   @override
-  State<SpotifyProMax> createState() => _SpotifyProMaxState();
+  _DhunlyMasterAppState createState() => _DhunlyMasterAppState();
 }
 
-class _SpotifyProMaxState extends State<SpotifyProMax> {
+class _DhunlyMasterAppState extends State<DhunlyMasterApp> {
   final AudioPlayer _player = AudioPlayer();
+  List songs = [];
+  List filtered = [];
+  bool isLoading = true;
   bool isPlaying = false;
-  Duration duration = Duration.zero;
-  Duration position = Duration.zero;
-
-  // TEST DATA: Gaane ab app ke andar hi hain (Feature Test ke liye)
-  List songs = [
-    {"title": "Softly", "artist": "Karan Aujla", "img": "https://i.getimg.ai/generated/882/1.jpg", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
-    {"title": "Winning Speech", "artist": "Karan Aujla", "img": "https://i.getimg.ai/generated/882/2.jpg", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
-    {"title": "Kesariya", "artist": "Arijit Singh", "img": "https://i.getimg.ai/generated/882/3.jpg", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
-  ];
-
   var currentSong;
+  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    currentSong = songs[0];
-    
-    _player.onDurationChanged.listen((d) => setState(() => duration = d));
-    _player.onPositionChanged.listen((p) => setState(() => position = p));
-    _player.onPlayerComplete.listen((event) => setState(() => isPlaying = false));
+    loadCloudMusic();
   }
 
-  void playMusic(var s) async {
+  // ☁️ CLOUD SYSTEM: Isse app baar-baar nahi banani padegi
+  Future<void> loadCloudMusic() async {
+    try {
+      final res = await http.get(Uri.parse("https://api.jsonsilo.com/public/69094396-e176-474c-8302-3866d56d788e"));
+      if (res.statusCode == 200) {
+        setState(() {
+          songs = json.decode(res.body)['songs'];
+          filtered = songs;
+          currentSong = songs[0];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void play(var s) async {
     await _player.stop();
     await _player.play(UrlSource(s['url']));
     setState(() { currentSong = s; isPlaying = true; });
@@ -50,19 +59,19 @@ class _SpotifyProMaxState extends State<SpotifyProMax> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Aesthetic Glow
-          Container(height: 300, decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.blueAccent.withOpacity(0.3), Colors.black], begin: Alignment.topCenter, end: Alignment.bottomCenter))),
+          // Background Glass Glow
+          Positioned(top: -100, left: -50, child: _glow(Colors.blueAccent)),
+          Positioned(bottom: -100, right: -50, child: _glow(Colors.purpleAccent)),
           
           SafeArea(
             child: Column(
               children: [
-                _buildAppBar(),
+                _buildSpotifyHeader(),
+                _buildSearchBar(),
                 _buildCategories(),
-                _buildSectionTitle("Made For You"),
-                _buildHorizontalList(),
-                _buildSectionTitle("Trending Now"),
-                _buildVerticalList(),
-                _buildModernMiniPlayer(),
+                if (isLoading) const Expanded(child: Center(child: CircularProgressIndicator()))
+                else _buildMainContent(),
+                if (currentSong != null) _buildPremiumPlayer(),
               ],
             ),
           ),
@@ -72,121 +81,133 @@ class _SpotifyProMaxState extends State<SpotifyProMax> {
     );
   }
 
-  Widget _buildAppBar() => Padding(
+  // --- FEATURES ---
+
+  Widget _glow(Color c) => Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: c.withOpacity(0.15), boxShadow: [BoxShadow(color: c.withOpacity(0.1), blurRadius: 100)]));
+
+  Widget _buildSpotifyHeader() => Padding(
     padding: const EdgeInsets.all(20),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text("Dhunly Pro", style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
         Row(children: [
-          const Icon(Icons.notifications_none, color: Colors.white),
-          const SizedBox(width: 15),
-          const Icon(Icons.history, color: Colors.white),
-          const SizedBox(width: 15),
-          CircleAvatar(radius: 15, backgroundImage: AssetImage("assets/logo.png")),
+          Image.asset("assets/logo.png", height: 40, errorBuilder: (c, e, s) => Icon(Icons.music_note, color: Colors.blueAccent)),
+          SizedBox(width: 10),
+          Text("Dhunly Pro", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1)),
         ]),
+        Row(children: [Icon(Icons.notifications_none), SizedBox(width: 15), Icon(Icons.settings_outlined)]),
       ],
     ),
   );
 
+  Widget _buildSearchBar() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 15),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.07), borderRadius: BorderRadius.circular(10)),
+      child: TextField(
+        onChanged: (v) => setState(() => filtered = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList()),
+        decoration: InputDecoration(hintText: "Search artist, songs...", border: InputBorder.none, icon: Icon(Icons.search, color: Colors.white54)),
+      ),
+    ),
+  );
+
   Widget _buildCategories() => Container(
-    height: 50,
+    height: 60,
     child: ListView(
       scrollDirection: Axis.horizontal,
-      children: ["Music", "Podcasts", "Punjabi", "Lofi", "Chill"].map((txt) => Container(
-        margin: const EdgeInsets.only(left: 15),
-        child: Chip(label: Text(txt), backgroundColor: Colors.white10, labelStyle: const TextStyle(color: Colors.white)),
+      padding: EdgeInsets.only(left: 20),
+      children: ["Music", "Podcasts", "Punjabi Hits", "Lofi", "Sad"].map((t) => Container(
+        margin: EdgeInsets.only(right: 10, top: 15, bottom: 5),
+        child: ActionChip(label: Text(t), backgroundColor: Colors.white10),
       )).toList(),
     ),
   );
 
-  Widget _buildSectionTitle(String title) => Padding(
-    padding: const EdgeInsets.all(15),
-    child: Align(alignment: Alignment.centerLeft, child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))),
-  );
-
-  Widget _buildHorizontalList() => Container(
-    height: 180,
+  Widget _buildMainContent() => Expanded(
     child: ListView.builder(
-      scrollDirection: Axis.horizontal,
-      itemCount: songs.length,
-      itemBuilder: (context, i) => GestureDetector(
-        onTap: () => playMusic(songs[i]),
-        child: Container(
-          width: 140,
-          margin: const EdgeInsets.only(left: 15),
-          child: Column(children: [
-            ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(songs[i]['img'], height: 130, width: 130, fit: BoxFit.cover)),
-            const SizedBox(height: 5),
-            Text(songs[i]['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-          ]),
-        ),
-      ),
-    ),
-  );
-
-  Widget _buildVerticalList() => Expanded(
-    child: ListView.builder(
-      itemCount: songs.length,
+      itemCount: filtered.length,
+      padding: EdgeInsets.all(15),
       itemBuilder: (context, i) => ListTile(
-        leading: ClipRRect(borderRadius: BorderRadius.circular(5), child: Image.network(songs[i]['img'], width: 50, height: 50, fit: BoxFit.cover)),
-        title: Text(songs[i]['title'], style: const TextStyle(color: Colors.white)),
-        subtitle: Text(songs[i]['artist'], style: const TextStyle(color: Colors.white54)),
-        trailing: const Icon(Icons.more_vert, color: Colors.white54),
-        onTap: () => playMusic(songs[i]),
+        onTap: () => play(filtered[i]),
+        leading: ClipRRect(borderRadius: BorderRadius.circular(5), child: Image.network(filtered[i]['img'], width: 50, height: 50, fit: BoxFit.cover)),
+        title: Text(filtered[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(filtered[i]['artist'], style: TextStyle(color: Colors.white54)),
+        trailing: Icon(Icons.more_vert, color: Colors.white54),
       ),
     ),
   );
 
-  Widget _buildModernMiniPlayer() => GestureDetector(
+  Widget _buildPremiumPlayer() => GestureDetector(
     onTap: () => _showFullPlayer(),
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.8), borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        children: [
-          Row(
+    child: ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          margin: EdgeInsets.all(10),
+          padding: EdgeInsets.all(10),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white10)),
+          child: Row(
             children: [
-              ClipRRect(borderRadius: BorderRadius.circular(5), child: Image.network(currentSong['img'], width: 40, height: 40)),
-              const SizedBox(width: 10),
-              Expanded(child: Text(currentSong['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white), onPressed: () {
+              ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(currentSong['img'], width: 45, height: 45)),
+              SizedBox(width: 15),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold)), Text(currentSong['artist'], style: TextStyle(color: Colors.white54, fontSize: 12))])),
+              IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 35), onPressed: () {
                 isPlaying ? _player.pause() : _player.resume();
                 setState(() => isPlaying = !isPlaying);
               }),
             ],
           ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(trackHeight: 2, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 0)),
-            child: Slider(value: position.inSeconds.toDouble(), max: duration.inSeconds.toDouble(), onChanged: (v) {}),
-          ),
-        ],
+        ),
       ),
     ),
   );
 
   Widget _buildBottomNav() => BottomNavigationBar(
+    currentIndex: _currentIndex,
+    onTap: (i) => setState(() => _currentIndex = i),
     backgroundColor: Colors.black,
     selectedItemColor: Colors.blueAccent,
     unselectedItemColor: Colors.white54,
     type: BottomNavigationBarType.fixed,
-    items: const [
+    items: [
       BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
       BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
       BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Library"),
-      BottomNavigationBarItem(icon: Icon(Icons.workspace_premium), label: "Premium"),
+      BottomNavigationBarItem(icon: Icon(Icons.person), label: "Premium"),
     ],
   );
 
   void _showFullPlayer() {
-    showModalBottomSheet(context: context, isScrollControlled: true, builder: (context) => Container(
-      color: Colors.black,
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.keyboard_arrow_down, color: Colors.white),
-        const SizedBox(height: 50),
-        Image.network(currentSong['img'], width: 300, height: 300, fit: BoxFit.cover),
-        const SizedBox(height: 40),
-        Text(currentSong['title'], style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-        Text(currentSong['artist'], style: const TextStyle(color: Colors.white54, fontSize: 18)),
-        const SizedBox(height: 2
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.all(30),
+        child: Column(children: [
+          Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+          Spacer(),
+          ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(currentSong['img'], width: 300, height: 300, fit: BoxFit.cover)),
+          Spacer(),
+          Text(currentSong['title'], style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          Text(currentSong['artist'], style: TextStyle(fontSize: 18, color: Colors.white54)),
+          Spacer(),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+            Icon(Icons.shuffle, color: Colors.white54),
+            Icon(Icons.skip_previous, size: 45),
+            IconButton(icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 85, color: Colors.blueAccent), onPressed: () {
+              isPlaying ? _player.pause() : _player.resume();
+              setState(() => isPlaying = !isPlaying);
+              Navigator.pop(context);
+            }),
+            Icon(Icons.skip_next, size: 45),
+            Icon(Icons.repeat, color: Colors.white54),
+          ]),
+          Spacer(),
+        ]),
+      ),
+    );
+  }
+}
