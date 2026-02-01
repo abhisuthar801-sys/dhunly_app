@@ -1,10 +1,58 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlySpotify()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyFinal()));
 
-class DhunlySpotify extends StatelessWidget {
-  const DhunlySpotify({super.key});
+class DhunlyFinal extends StatefulWidget {
+  const DhunlyFinal({super.key});
+  @override
+  State<DhunlyFinal> createState() => _DhunlyFinalState();
+}
+
+class _DhunlyFinalState extends State<DhunlyFinal> {
+  final AudioPlayer _player = AudioPlayer();
+  bool isPlaying = false;
+  String currentSong = "Select a Track";
+  String currentArtist = "Dhunly Originals";
+  String currentImg = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500&q=80";
+
+  // --- YE LINKS 100% WORK KARENGE ---
+  final List<Map<String, String>> playlist = [
+    {
+      'title': 'High Energy Beats',
+      'artist': 'Electronic Mix',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      'img': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'
+    },
+    {
+      'title': 'Lofi Chill Night',
+      'artist': 'Dhunly Special',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
+      'img': 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=300'
+    },
+    {
+      'title': 'Deep Forest',
+      'artist': 'Nature Vibe',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3',
+      'img': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300'
+    }
+  ];
+
+  void _play(String url, String title, String artist, String img) async {
+    try {
+      await _player.stop();
+      await _player.play(UrlSource(url));
+      setState(() {
+        currentSong = title;
+        currentArtist = artist;
+        currentImg = img;
+        isPlaying = true;
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,145 +61,94 @@ class DhunlySpotify extends StatelessWidget {
       body: Stack(
         children: [
           // Background Aesthetic
-          Positioned(top: -100, left: -50, child: _orb(Colors.greenAccent.withOpacity(0.2))),
-          Positioned(bottom: -100, right: -50, child: _orb(Colors.blueAccent.withOpacity(0.2))),
-          
+          Positioned(top: -50, left: -50, child: _orb(Colors.purple.withOpacity(0.3))),
+          Positioned(bottom: -50, right: -50, child: _orb(Colors.blue.withOpacity(0.3))),
+          BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
+
           SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _header(),
-                  _searchBar(),
-                  _sectionTitle("Start browsing"),
-                  _browseGrid(),
-                  _sectionTitle("Discover something new"),
-                  _discoverCards(),
-                  const SizedBox(height: 100), // Player ke liye jagah
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _header(),
+                _searchBarStub(),
+                _sectionTitle("Your Daily Mix"),
+                _songGrid(),
+                const Spacer(),
+                _floatingPlayer(),
+              ],
             ),
           ),
-          
-          // Floating Glass Player (Niche wala bar)
-          Positioned(bottom: 20, left: 10, right: 10, child: _glassPlayer()),
         ],
       ),
-      bottomNavigationBar: _bottomNav(),
     );
   }
 
-  Widget _orb(Color c) => Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, color: c), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container(color: Colors.transparent)));
+  Widget _orb(Color c) => Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: c));
 
   Widget _header() => const Padding(
     padding: EdgeInsets.all(20),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        CircleAvatar(backgroundColor: Colors.purple, child: Text("A")),
-        Text("Search", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-        Icon(Icons.camera_alt_outlined, color: Colors.white),
-      ],
-    ),
+    child: Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: 8)),
   );
 
-  Widget _searchBar() => Container(
+  Widget _searchBarStub() => Container(
     margin: const EdgeInsets.symmetric(horizontal: 20),
     padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(5)),
-    child: const Row(
-      children: [
-        Icon(Icons.search, color: Colors.black),
-        SizedBox(width: 10),
-        Text("What do you want to listen to?", style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold)),
-      ],
-    ),
+    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+    child: const Row(children: [Icon(Icons.search, color: Colors.white54), SizedBox(width: 10), Text("What do you want to listen to?", style: TextStyle(color: Colors.white54))]),
   );
 
-  Widget _sectionTitle(String title) => Padding(
-    padding: const EdgeInsets.all(20),
-    child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-  );
+  Widget _sectionTitle(String t) => Padding(padding: const EdgeInsets.all(20), child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)));
 
-  Widget _browseGrid() => GridView.count(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    crossAxisCount: 2,
-    padding: const EdgeInsets.symmetric(horizontal: 15),
-    childAspectRatio: 1.8,
-    children: [
-      _categoryCard("Music", Colors.pink, "https://shorturl.at/afmP6"),
-      _categoryCard("Podcasts", Colors.teal, "https://shorturl.at/afmP6"),
-      _categoryCard("Live Events", Colors.deepPurple, "https://shorturl.at/afmP6"),
-      _categoryCard("I-Pop", Colors.blueGrey, "https://shorturl.at/afmP6"),
-    ],
-  );
-
-  Widget _categoryCard(String title, Color color, String img) => Container(
-    margin: const EdgeInsets.all(5),
-    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(5)),
-    child: Stack(
-      children: [
-        Padding(padding: const EdgeInsets.all(10), child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-        Positioned(bottom: -10, right: -10, child: RotationTransition(turns: const AlwaysStoppedAnimation(25 / 360), child: Image.network(img, width: 60))),
-      ],
-    ),
-  );
-
-  Widget _discoverCards() => SizedBox(
-    height: 250,
-    child: ListView(
+  Widget _songGrid() => SizedBox(
+    height: 200,
+    child: ListView.builder(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      children: [
-        _largeCard("Music for you", "https://shorturl.at/afmP6"),
-        _largeCard("#filmi", "https://shorturl.at/afmP6"),
-        _largeCard("#bold", "https://shorturl.at/afmP6"),
-      ],
+      padding: const EdgeInsets.only(left: 20),
+      itemCount: playlist.length,
+      itemBuilder: (context, i) {
+        var s = playlist[i];
+        return GestureDetector(
+          onTap: () => _play(s['url']!, s['title']!, s['artist']!, s['img']!),
+          child: Container(
+            width: 150,
+            margin: const EdgeInsets.only(right: 15),
+            decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(15)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(borderRadius: const BorderRadius.vertical(top: Radius.circular(15)), child: Image.network(s['img']!, height: 120, width: 150, fit: BoxFit.cover)),
+                Padding(padding: const EdgeInsets.all(10), child: Text(s['title']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1)),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text(s['artist']!, style: const TextStyle(color: Colors.white54, fontSize: 12))),
+              ],
+            ),
+          ),
+        );
+      },
     ),
   );
 
-  Widget _largeCard(String label, String img) => Container(
-    width: 160,
-    margin: const EdgeInsets.only(right: 15),
-    decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover)),
-    alignment: Alignment.bottomLeft,
-    padding: const EdgeInsets.all(10),
-    child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-  );
-
-  Widget _glassPlayer() => ClipRRect(
-    borderRadius: BorderRadius.circular(10),
+  Widget _floatingPlayer() => ClipRRect(
     child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
       child: Container(
-        height: 60,
-        color: Colors.white.withOpacity(0.1),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        margin: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white12)),
         child: Row(
           children: [
-            ClipRRect(borderRadius: BorderRadius.circular(5), child: Image.network("https://shorturl.at/afmP6", width: 45, height: 45, fit: BoxFit.cover)),
-            const SizedBox(width: 10),
-            const Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [Text("Toomba Vajjda", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)), Text("Kanwar Grewal", style: TextStyle(color: Colors.white70, fontSize: 11))])),
-            const Icon(Icons.computer, color: Colors.white70),
+            CircleAvatar(backgroundImage: NetworkImage(currentImg), radius: 25),
             const SizedBox(width: 15),
-            const Icon(Icons.play_arrow, color: Colors.white, size: 35),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Text(currentSong, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text(currentArtist, style: const TextStyle(color: Colors.white70, fontSize: 12))])),
+            IconButton(
+              icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, color: Colors.white, size: 40),
+              onPressed: () {
+                if (isPlaying) { _player.pause(); } else { _player.resume(); }
+                setState(() => isPlaying = !isPlaying);
+              },
+            ),
           ],
         ),
       ),
     ),
-  );
-
-  Widget _bottomNav() => BottomNavigationBar(
-    backgroundColor: Colors.black,
-    unselectedItemColor: Colors.white54,
-    selectedItemColor: Colors.white,
-    type: BottomNavigationBarType.fixed,
-    items: const [
-      BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-      BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-      BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Your Library"),
-      BottomNavigationBarItem(icon: Icon(Icons.add), label: "Create"),
-    ],
   );
 }
