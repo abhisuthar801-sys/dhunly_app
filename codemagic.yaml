@@ -1,53 +1,23 @@
 workflows:
   android-workflow:
-    name: Dhunly Final Build
-    max_build_duration: 60
+    name: Dhunly Internet Fix
     instance_type: mac_mini_m2
     environment:
       flutter: stable
       java: 17
     scripts:
-      - name: Create Fresh Android Project
+      - name: Set Android Permissions
         script: |
-          flutter create . --platforms android --org com.abhi.dhunly
-          # Naya tarika: Permission ko manifest tag ke turant niche daalna
-          cat <<EOF > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <application
-                  android:label="Dhunly"
-                  android:name="\${applicationName}"
-                  android:icon="@mipmap/ic_launcher"
-                  android:usesCleartextTraffic="true">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
-                      <meta-data
-                        android:name="io.flutter.embedding.android.NormalTheme"
-                        android:resource="@style/NormalTheme"
-                        />
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
-              </application>
-          </manifest>
-          EOF
-      - name: Get Packages
-        script: |
-          flutter pub get
-      - name: Build Debug APK
-        script: |
-          flutter build apk --debug
+          # Ye script internet permission force karega
+          sed -i '' '/<application/i\
+          <uses-permission android:name="android.permission.INTERNET" />\
+          <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' android/app/src/main/AndroidManifest.xml
+          
+          # HTTP links allow karne ke liye
+          sed -i '' 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+      - name: Get dependencies
+        script: flutter pub get
+      - name: Build APK
+        script: flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
