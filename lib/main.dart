@@ -4,42 +4,49 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyMasterApp()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyCloudMaster()));
 
-class DhunlyMasterApp extends StatefulWidget {
-  const DhunlyMasterApp({super.key});
+class DhunlyCloudMaster extends StatefulWidget {
+  const DhunlyCloudMaster({super.key});
   @override
-  State<DhunlyMasterApp> createState() => _DhunlyMasterAppState();
+  State<DhunlyCloudMaster> createState() => _DhunlyCloudMasterState();
 }
 
-class _DhunlyMasterAppState extends State<DhunlyMasterApp> {
+class _DhunlyCloudMasterState extends State<DhunlyCloudMaster> {
   final AudioPlayer _player = AudioPlayer();
-  List cloudSongs = [];
+  List cloudLibrary = [];
   bool isPlaying = false;
   bool isLoading = true;
-  String currentSong = "Dhunly: Select Vibe";
+  String currentSong = "Dhunly: Loading Hits...";
   String currentImg = "https://cdn-icons-png.flaticon.com/512/3844/3844724.png";
 
   @override
   void initState() {
     super.initState();
-    fetchCloudLibrary(); // App khulte hi database se gaane uthayega
+    loadDhunlyDatabase();
   }
 
-  // --- DATABASE FETCH (External JSON) ---
-  Future<void> fetchCloudLibrary() async {
+  // --- DHUNLY CLOUD ENGINE ---
+  Future<void> loadDhunlyDatabase() async {
     try {
-      // Ye mera banaya hua database link hai, isme hum 100+ gaane dalenge
-      final res = await http.get(Uri.parse("https://api.jsonsilo.com/public/6e584a7e-1234-4321-abcd-example")); 
-      // Note: Abhi ke liye niche static list hai jab tak link active na ho
-      setState(() {
-        cloudSongs = [
-          {'title': 'Sidhu Legend', 'artist': 'Sidhu Moose Wala', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'img': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200'},
-          {'title': 'Soft Lofi', 'artist': 'Dhunly Beats', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', 'img': 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200'},
-          {'title': 'Punjabi Vibe', 'artist': 'Karan Aujla', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', 'img': 'https://images.unsplash.com/photo-1514525253344-f856d3a7611a?w=200'},
-        ];
-        isLoading = false;
-      });
+      // Ye humara temporary master link hai jo verified gaane bhejega
+      final response = await http.get(Uri.parse("https://raw.githubusercontent.com/dhunly-music/database/main/library.json"));
+      
+      if (response.statusCode == 200) {
+        setState(() {
+          cloudLibrary = json.decode(response.body);
+          isLoading = false;
+        });
+      } else {
+        // Fallback: Agar server down ho toh ye default gaane chalenge
+        setState(() {
+          cloudLibrary = [
+            {'title': 'Legend', 'artist': 'Sidhu Moose Wala', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'img': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300'},
+            {'title': 'Kesariya', 'artist': 'Arijit Singh', 'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', 'img': 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=300'},
+          ];
+          isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() => isLoading = false);
     }
@@ -58,18 +65,17 @@ class _DhunlyMasterAppState extends State<DhunlyMasterApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF050505),
       body: Stack(
         children: [
-          _backgroundGlow(),
+          _buildBackground(),
           SafeArea(
             child: Column(
               children: [
-                _headerWithLogo(),
-                _categoryTabs(),
-                if (isLoading) const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
-                _songLibrary(),
-                _premiumMiniPlayer(),
+                _buildHeader(),
+                if (isLoading) const Expanded(child: Center(child: CircularProgressIndicator(color: Colors.blueAccent))),
+                if (!isLoading) _buildLibraryList(),
+                _buildBottomPlayer(),
               ],
             ),
           ),
@@ -78,64 +84,58 @@ class _DhunlyMasterAppState extends State<DhunlyMasterApp> {
     );
   }
 
-  Widget _backgroundGlow() => Positioned(top: -100, left: -50, child: Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent.withOpacity(0.15))));
+  Widget _buildBackground() => Positioned(
+    top: -50, right: -50,
+    child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent.withOpacity(0.15))),
+  );
 
-  Widget _headerWithLogo() => Padding(
+  Widget _buildHeader() => Padding(
     padding: const EdgeInsets.all(25),
     child: Row(
       children: [
-        // AAPKA CHUNA HUA LOGO ICON
+        // Final Logo Icon
         Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: Colors.blueAccent, borderRadius: BorderRadius.circular(12)),
-          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Colors.blueAccent, Colors.purpleAccent]),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: const Icon(Icons.music_note, color: Colors.white, size: 28),
         ),
         const SizedBox(width: 15),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("DHUNLY PRO", style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 2)),
-            Text("Premium Experience", style: TextStyle(color: Colors.white38, fontSize: 10)),
+            Text("Online Cloud Library", style: TextStyle(color: Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold)),
           ],
         ),
       ],
     ),
   );
 
-  Widget _categoryTabs() => Container(
-    height: 40,
-    margin: const EdgeInsets.only(bottom: 10),
-    child: ListView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      children: ['Trending', 'Punjabi', 'Lofi', 'New Hits'].map((cat) => Container(
-        margin: const EdgeInsets.only(right: 15),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
-        child: Text(cat, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      )).toList(),
-    ),
-  );
-
-  Widget _songLibrary() => Expanded(
+  Widget _buildLibraryList() => Expanded(
     child: ListView.builder(
-      itemCount: cloudSongs.length,
-      padding: const EdgeInsets.all(20),
-      itemBuilder: (context, i) => ListTile(
-        contentPadding: const EdgeInsets.only(bottom: 15),
-        leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(cloudSongs[i]['img'], width: 50, height: 50, fit: BoxFit.cover)),
-        title: Text(cloudSongs[i]['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Text(cloudSongs[i]['artist'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
-        trailing: const Icon(Icons.more_vert, color: Colors.white30),
-        onTap: () => playMusic(cloudSongs[i]),
+      itemCount: cloudLibrary.length,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemBuilder: (context, i) => Container(
+        margin: const EdgeInsets.only(bottom: 15),
+        decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15)),
+        child: ListTile(
+          leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(cloudLibrary[i]['img'], width: 50, height: 50, fit: BoxFit.cover)),
+          title: Text(cloudLibrary[i]['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          subtitle: Text(cloudLibrary[i]['artist'], style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          trailing: const Icon(Icons.play_circle_outline, color: Colors.blueAccent),
+          onTap: () => playMusic(cloudLibrary[i]),
+        ),
       ),
     ),
   );
 
-  Widget _premiumMiniPlayer() => Container(
+  Widget _buildBottomPlayer() => Container(
     padding: const EdgeInsets.all(15),
     decoration: BoxDecoration(
-      color: const Color(0xFF121212),
+      color: Colors.black,
       border: Border(top: BorderSide(color: Colors.blueAccent.withOpacity(0.3))),
     ),
     child: Row(
