@@ -1,55 +1,50 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 
-void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyOnline()));
+void main() => runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: DhunlyFinalTest()));
 
-class DhunlyOnline extends StatefulWidget {
-  const DhunlyOnline({super.key});
+class DhunlyFinalTest extends StatefulWidget {
+  const DhunlyFinalTest({super.key});
   @override
-  State<DhunlyOnline> createState() => _DhunlyOnlineState();
+  State<DhunlyFinalTest> createState() => _DhunlyFinalTestState();
 }
 
-class _DhunlyOnlineState extends State<DhunlyOnline> {
+class _DhunlyFinalTestState extends State<DhunlyFinalTest> {
   final AudioPlayer _player = AudioPlayer();
-  List songs = [];
-  bool isLoading = false;
   bool isPlaying = false;
-  String currentSong = "Dhunly: Online Mode";
-  String currentImg = "https://cdn-icons-png.flaticon.com/512/3844/3844724.png";
-
-  // --- 100% WORKING API (No Key Required) ---
-  Future<void> getMusic(String query) async {
-    setState(() => isLoading = true);
-    try {
-      // Hum is open-source API ka use karenge jo fast hai
-      final response = await http.get(Uri.parse("https://saavn.dev/api/search/songs?query=$query&limit=20"));
-      if (response.statusCode == 200) {
-        var data = json.decode(response.body);
-        setState(() {
-          songs = data['data']['results'];
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
+  String currentSong = "Ready to Play";
+  
+  // YE LINKS 100% CHALENGE (Direct MP3 Files)
+  final List<Map<String, String>> staticSongs = [
+    {
+      'name': 'Punjabi Bass Mix',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      'img': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200'
+    },
+    {
+      'name': 'Lofi Beats Dhunly',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      'img': 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=200'
+    },
+    {
+      'name': 'Slow Chill Vibe',
+      'url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      'img': 'https://images.unsplash.com/photo-1459749411177-042180ce673c?w=200'
     }
-  }
+  ];
 
-  void playMusic(String url, String name, String img) async {
+  void playDirect(String url, String name) async {
     try {
       await _player.stop();
-      // Yahan hum sabse fast server link utha rahe hain
+      // Yahan hum UrlSource use kar rahe hain jo direct MP3 stream karta hai
       await _player.play(UrlSource(url));
       setState(() {
         currentSong = name;
-        currentImg = img;
         isPlaying = true;
       });
     } catch (e) {
-      print("Stream Error: $e");
+      print("Error: $e");
     }
   }
 
@@ -59,16 +54,59 @@ class _DhunlyOnlineState extends State<DhunlyOnline> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Glass Background
-          _backgroundEffect(),
+          // Premium Logo/Background Effect
+          Positioned(top: -50, left: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blue.withOpacity(0.4)))),
+          BackdropFilter(filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)),
+
           SafeArea(
             child: Column(
               children: [
-                _header(),
-                _searchBox(),
-                if (isLoading) const LinearProgressIndicator(color: Colors.blueAccent),
-                _songList(),
-                _playerBar(),
+                const SizedBox(height: 30),
+                const Text("DHUNLY", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 10)),
+                const Text("STABLE VERSION 1.0", style: TextStyle(color: Colors.white54, fontSize: 10)),
+                
+                const Padding(
+                  padding: EdgeInsets.all(30),
+                  child: Icon(Icons.music_note, color: Colors.blueAccent, size: 80),
+                ),
+
+                const Text("Tap to Test Audio", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: staticSongs.length,
+                    itemBuilder: (context, i) => Card(
+                      color: Colors.white10,
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: ListTile(
+                        leading: const Icon(Icons.play_circle_fill, color: Colors.blueAccent, size: 40),
+                        title: Text(staticSongs[i]['name']!, style: const TextStyle(color: Colors.white)),
+                        onTap: () => playDirect(staticSongs[i]['url']!, staticSongs[i]['name']!),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Control Bar
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(color: Colors.blueAccent, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.graphic_eq, color: Colors.white),
+                      const SizedBox(width: 15),
+                      Expanded(child: Text(currentSong, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                      IconButton(
+                        icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 30),
+                        onPressed: () {
+                          if (isPlaying) _player.pause(); else _player.resume();
+                          setState(() => isPlaying = !isPlaying);
+                        },
+                      )
+                    ],
+                  ),
+                )
               ],
             ),
           ),
@@ -76,69 +114,4 @@ class _DhunlyOnlineState extends State<DhunlyOnline> {
       ),
     );
   }
-
-  Widget _backgroundEffect() {
-    return Stack(
-      children: [
-        Positioned(top: -50, left: -50, child: Container(width: 300, height: 300, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent))),
-        Positioned(bottom: -50, right: -50, child: Container(width: 300, height: 300, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.purpleAccent))),
-        BackdropFilter(filter: ImageFilter.blur(sigmaX: 90, sigmaY: 90), child: Container(color: Colors.transparent)),
-      ],
-    );
-  }
-
-  Widget _header() => const Padding(
-    padding: EdgeInsets.all(20),
-    child: Text("DHUNLY PRO", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 5)),
-  );
-
-  Widget _searchBox() => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: TextField(
-      onSubmitted: (v) => getMusic(v),
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: "Search (Ex: Sidhu, Arijit, Karan Aujla)",
-        hintStyle: const TextStyle(color: Colors.white38),
-        filled: true,
-        fillColor: Colors.white10,
-        prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-      ),
-    ),
-  );
-
-  Widget _songList() => Expanded(
-    child: ListView.builder(
-      itemCount: songs.length,
-      itemBuilder: (context, index) {
-        var s = songs[index];
-        return ListTile(
-          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(s['image'].last['url'])),
-          title: Text(s['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          subtitle: Text(s['artists']['primary'][0]['name'], style: const TextStyle(color: Colors.white54)),
-          onTap: () => playMusic(s['downloadUrl'].last['url'], s['name'], s['image'].last['url']),
-        );
-      },
-    ),
-  );
-
-  Widget _playerBar() => Container(
-    padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), border: const Border(top: BorderSide(color: Colors.white10))),
-    child: Row(
-      children: [
-        CircleAvatar(backgroundImage: NetworkImage(currentImg)),
-        const SizedBox(width: 15),
-        Expanded(child: Text(currentSong, style: const TextStyle(color: Colors.white), maxLines: 1)),
-        IconButton(
-          icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle, color: Colors.white, size: 40),
-          onPressed: () {
-            if (isPlaying) _player.pause(); else _player.resume();
-            setState(() => isPlaying = !isPlaying);
-          },
-        ),
-      ],
-    ),
-  );
 }
