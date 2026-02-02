@@ -1,19 +1,29 @@
 name: dhunly_pro
-version: 1.0.2+3 # Version badhata rehna har baar
+description: "Dhunly Pro Official"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   audioplayers: ^5.2.1
   http: ^1.1.0
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_launcher_icons: "^0.13.1"
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/logo.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/logo.png"
 
 flutter:
   uses-material-design: true
