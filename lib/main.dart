@@ -1,23 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:ui';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyProGlass(),
+      home: DhunlyProDirect(),
     ));
 
-class DhunlyProGlass extends StatefulWidget {
+class DhunlyProDirect extends StatefulWidget {
   @override
-  _DhunlyProGlassState createState() => _DhunlyProGlassState();
+  _DhunlyProDirectState createState() => _DhunlyProDirectState();
 }
 
-class _DhunlyProGlassState extends State<DhunlyProGlass> {
+class _DhunlyProDirectState extends State<DhunlyProDirect> {
   final AudioPlayer _player = AudioPlayer();
-  List allSongs = [];
+  
+  // PASTEBIN KI ZARURAT NAHI - LIST YAHAN HAI
+  List allSongs = [
+    {
+      "title": "Door Des Koi Kudi",
+      "artist": "Kaka",
+      "url": "https://res.cloudinary.com/ds1bcvkop/video/upload/v1770036580/Door_Des_Koi_Kudi_-_Kaka_yvouzh.mp3",
+      "img": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&q=80"
+    },
+    {
+      "title": "Cloud Test Track",
+      "artist": "Dhunly Pro",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "img": "https://picsum.photos/200/200"
+    }
+  ];
+
   List filteredSongs = [];
   var currentSong;
   bool isPlaying = false;
@@ -28,40 +42,25 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
   @override
   void initState() {
     super.initState();
-    fetchSongs();
+    filteredSongs = allSongs;
+
+    // Player Listeners
     _player.onDurationChanged.listen((d) => setState(() => duration = d));
     _player.onPositionChanged.listen((p) => setState(() => position = p));
     _player.onPlayerComplete.listen((event) => playNext());
   }
 
-  fetchSongs() async {
-    // APNA PASTEBIN RAW LINK YAHAN DALO
-    String url = "https://pastebin.com/raw/S67v8v0Q"; 
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        var data = json.decode(response.body);
-        setState(() {
-          allSongs = data['songs'];
-          filteredSongs = allSongs;
-        });
-      }
-    } catch (e) {
-      print("Error fetching songs: $e");
-    }
-  }
-
   void playMusic(song) async {
     try {
       await _player.stop();
+      // Cloudinary links ke liye UrlSource best hai
       await _player.play(UrlSource(song['url']));
       setState(() {
         currentSong = song;
         isPlaying = true;
       });
     } catch (e) {
-      print("Playback Error: $e");
-      playNext(); // Agar error aaye toh agla gaana
+      print("Error playing song: $e");
     }
   }
 
@@ -83,7 +82,7 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Glows
+          // Background Glows for Premium Look
           Positioned(top: -50, left: -50, child: circleGlow(Colors.deepPurple.withOpacity(0.3))),
           Positioned(bottom: 100, right: -50, child: circleGlow(Colors.greenAccent.withOpacity(0.2))),
 
@@ -113,8 +112,8 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1)),
-          CircleAvatar(backgroundColor: Colors.white10, child: Icon(Icons.person, color: Colors.white)),
+          Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+          IconButton(icon: Icon(Icons.refresh, color: Colors.white54), onPressed: () => setState(() {}))
         ],
       ),
     );
@@ -135,7 +134,7 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
           padding: EdgeInsets.all(15),
           child: TextField(
             onChanged: (v) => setState(() => filteredSongs = allSongs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList()),
-            decoration: InputDecoration(hintText: "Search songs, artists...", prefixIcon: Icon(Icons.search), filled: true, fillColor: Colors.white10, border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none)),
+            decoration: InputDecoration(hintText: "Search songs...", prefixIcon: Icon(Icons.search), filled: true, fillColor: Colors.white10, border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none)),
           ),
         ),
         Expanded(
@@ -149,12 +148,13 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
   }
 
   Widget songTile(song) {
+    bool isSelected = currentSong == song;
     return ListTile(
       onTap: () => playMusic(song),
       leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(song['img'], width: 55, height: 55, fit: BoxFit.cover)),
-      title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.greenAccent : Colors.white)),
       subtitle: Text(song['artist'], style: TextStyle(color: Colors.grey[400])),
-      trailing: Icon(Icons.play_circle_outline, color: Colors.greenAccent),
+      trailing: Icon(isSelected && isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline, color: Colors.greenAccent),
     );
   }
 
@@ -164,9 +164,9 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            height: 150,
+            height: 160,
             padding: EdgeInsets.all(20),
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.1))),
             child: Column(
@@ -175,10 +175,10 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
                   children: [
                     ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
                     SizedBox(width: 15),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis), Text(currentSong['artist'], style: TextStyle(color: Colors.grey, fontSize: 12))])),
-                    IconButton(icon: Icon(Icons.skip_previous, size: 30), onPressed: playPrevious),
-                    IconButton(icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 50, color: Colors.greenAccent), onPressed: () { if(isPlaying) _player.pause(); else _player.resume(); setState(() => isPlaying = !isPlaying); }),
-                    IconButton(icon: Icon(Icons.skip_next, size: 30), onPressed: playNext),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis), Text(currentSong['artist'], style: TextStyle(color: Colors.grey, fontSize: 12))])),
+                    IconButton(icon: Icon(Icons.skip_previous), onPressed: playPrevious),
+                    IconButton(icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 45, color: Colors.greenAccent), onPressed: () { if(isPlaying) _player.pause(); else _player.resume(); setState(() => isPlaying = !isPlaying); }),
+                    IconButton(icon: Icon(Icons.skip_next), onPressed: playNext),
                   ],
                 ),
                 Slider(activeColor: Colors.greenAccent, inactiveColor: Colors.white24, value: position.inSeconds.toDouble(), max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0, onChanged: (v) => _player.seek(Duration(seconds: v.toInt()))),
@@ -197,12 +197,10 @@ class _DhunlyProGlassState extends State<DhunlyProGlass> {
       backgroundColor: Colors.black,
       selectedItemColor: Colors.greenAccent,
       unselectedItemColor: Colors.grey,
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
       items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: ""),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
-        BottomNavigationBarItem(icon: Icon(Icons.library_music), label: ""),
+        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
     );
   }
