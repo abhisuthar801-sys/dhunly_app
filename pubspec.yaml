@@ -1,6 +1,7 @@
 name: dhunly_pro
-description: Modern Music App
+description: Modern Music Streaming App
 version: 1.0.0+1
+publish_to: 'none'
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
