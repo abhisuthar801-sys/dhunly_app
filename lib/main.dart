@@ -15,7 +15,7 @@ class DhunlyProApp extends StatefulWidget {
 }
 
 class _DhunlyProAppState extends State<DhunlyProApp> {
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _player = AudioPlayer();
   List songs = [];
   List filteredSongs = [];
   bool isLoading = true;
@@ -44,7 +44,7 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
   }
 
   void playMusic(song) {
-    _audioPlayer.play(UrlSource(song['url']));
+    _player.play(UrlSource(song['url']));
     setState(() {
       currentSong = song;
       isPlaying = true;
@@ -57,70 +57,57 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        elevation: 0,
         title: Image.asset('assets/logo.png', height: 40), // AAPKA LOGO
         centerTitle: true,
       ),
       body: Column(
         children: [
-          // 🔎 Working Search Bar
           Padding(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.all(10),
             child: TextField(
-              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: "Search for songs or artists...",
-                hintStyle: TextStyle(color: Colors.grey),
-                prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
+                hintText: "Search Songs...",
+                prefixIcon: Icon(Icons.search, color: Colors.blue),
                 filled: true,
-                fillColor: Colors.grey[900],
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                fillColor: Colors.white12,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              onChanged: (query) {
+              onChanged: (v) {
                 setState(() {
-                  filteredSongs = songs.where((s) => s['title'].toLowerCase().contains(query.toLowerCase()) || s['artist'].toLowerCase().contains(query.toLowerCase())).toList();
+                  filteredSongs = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList();
                 });
               },
             ),
           ),
-          // 🎶 Song List
           isLoading 
-            ? Expanded(child: Center(child: CircularProgressIndicator(color: Colors.blueAccent)))
+            ? Expanded(child: Center(child: CircularProgressIndicator()))
             : Expanded(
                 child: ListView.builder(
                   itemCount: filteredSongs.length,
-                  itemBuilder: (context, i) => ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(filteredSongs[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
-                    ),
-                    title: Text(filteredSongs[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(filteredSongs[i]['artist'], style: TextStyle(color: Colors.grey)),
-                    trailing: Icon(Icons.play_circle_fill, color: Colors.blueAccent),
+                  itemBuilder: (ctx, i) => ListTile(
+                    leading: CircleAvatar(backgroundImage: NetworkImage(filteredSongs[i]['img'])),
+                    title: Text(filteredSongs[i]['title']),
+                    subtitle: Text(filteredSongs[i]['artist']),
+                    trailing: Icon(Icons.play_arrow, color: Colors.blue),
                     onTap: () => playMusic(filteredSongs[i]),
                   ),
                 ),
               ),
-          // 📱 Mini Player (Working Bottom Bar)
           if (currentSong != null)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.9), borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-              child: Row(
-                children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 45, height: 45)),
-                  SizedBox(width: 15),
-                  Expanded(child: Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                  IconButton(
-                    icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40, color: Colors.white),
-                    onPressed: () {
-                      if (isPlaying) { _audioPlayer.pause(); } else { _audioPlayer.resume(); }
-                      setState(() => isPlaying = !isPlaying);
-                    },
-                  )
-                ],
+              color: Colors.blueGrey[900],
+              child: ListTile(
+                leading: Image.network(currentSong['img']),
+                title: Text(currentSong['title']),
+                trailing: IconButton(
+                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                  onPressed: () {
+                    if (isPlaying) _player.pause(); else _player.resume();
+                    setState(() => isPlaying = !isPlaying);
+                  },
+                ),
               ),
-            ),
+            )
         ],
       ),
     );
