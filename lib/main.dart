@@ -6,15 +6,15 @@ import 'dart:ui';
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyFinalApp(),
+      home: DhunlyApp(),
     ));
 
-class DhunlyFinalApp extends StatefulWidget {
+class DhunlyApp extends StatefulWidget {
   @override
-  _DhunlyFinalAppState createState() => _DhunlyFinalAppState();
+  _DhunlyAppState createState() => _DhunlyAppState();
 }
 
-class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
+class _DhunlyAppState extends State<DhunlyApp> {
   final yt_exp.YoutubeExplode yt = yt_exp.YoutubeExplode();
   final AudioPlayer _player = AudioPlayer();
   
@@ -29,6 +29,7 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
     super.initState();
     _player.onDurationChanged.listen((d) => setState(() => duration = d));
     _player.onPositionChanged.listen((p) => setState(() => position = p));
+    _player.onPlayerStateChanged.listen((s) => setState(() => isPlaying = s == PlayerState.playing));
   }
 
   void searchAndPlay(String query) async {
@@ -48,7 +49,6 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
             "artist": video.author,
             "img": video.thumbnails.highResUrl,
           };
-          isPlaying = true;
           isLoading = false;
         });
       }
@@ -64,16 +64,15 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Glass Design background
-          _buildBackground(),
-          
+          _buildGlow(Colors.deepPurple.withOpacity(0.2), -50, -50),
+          _buildGlow(Colors.blueAccent.withOpacity(0.1), 400, 100),
           SafeArea(
             child: Column(
               children: [
                 _buildHeader(),
                 _buildSearchBar(),
-                if (isLoading) LinearProgressIndicator(color: Colors.greenAccent),
-                Expanded(child: _buildBody()),
+                if (isLoading) LinearProgressIndicator(color: Colors.greenAccent, backgroundColor: Colors.transparent),
+                Expanded(child: _buildMainView()),
                 if (currentSong != null) _buildMiniPlayer(),
               ],
             ),
@@ -83,14 +82,8 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
     );
   }
 
-  Widget _buildBackground() {
-    return Positioned(
-      top: -100, left: -50,
-      child: Container(
-        width: 300, height: 300,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent.withOpacity(0.15), boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.1), blurRadius: 100, spreadRadius: 50)]),
-      ),
-    );
+  Widget _buildGlow(Color color, double top, double left) {
+    return Positioned(top: top, left: left, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)])));
   }
 
   Widget _buildHeader() {
@@ -99,8 +92,8 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-          Icon(Icons.account_circle, size: 35, color: Colors.greenAccent),
+          Text("Dhunly Pro", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+          CircleAvatar(backgroundColor: Colors.white12, child: Icon(Icons.person, color: Colors.greenAccent)),
         ],
       ),
     );
@@ -110,13 +103,13 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: TextField(
             onSubmitted: (v) => searchAndPlay(v),
             decoration: InputDecoration(
-              hintText: "Search any song...",
+              hintText: "Search song or artist...",
               prefixIcon: Icon(Icons.search, color: Colors.greenAccent),
               filled: true,
               fillColor: Colors.white.withOpacity(0.05),
@@ -128,32 +121,26 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
     );
   }
 
-  Widget _buildBody() {
-    if (currentSong == null) return Center(child: Text("Search karo aur music bajao 🎧", style: TextStyle(color: Colors.grey)));
+  Widget _buildMainView() {
+    if (currentSong == null) {
+      return Center(child: Text("Search karo, gaana bajao!", style: TextStyle(color: Colors.grey)));
+    }
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        ClipRRect(borderRadius: BorderRadius.circular(30), child: Image.network(currentSong['img'], height: 260, width: 260, fit: BoxFit.cover)),
+        ClipRRect(borderRadius: BorderRadius.circular(25), child: Image.network(currentSong['img'], height: 260, width: 260, fit: BoxFit.cover)),
         SizedBox(height: 25),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 30),
-          child: Text(currentSong['title'], textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        ),
-        Text(currentSong['artist'], style: TextStyle(color: Colors.grey, fontSize: 16)),
-        
+        Text(currentSong['title'], style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+        Text(currentSong['artist'], style: TextStyle(color: Colors.grey)),
         Slider(
           activeColor: Colors.greenAccent,
           value: position.inSeconds.toDouble(),
           max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
           onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
         ),
-        
         IconButton(
-          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 90, color: Colors.greenAccent),
-          onPressed: () {
-            if (isPlaying) _player.pause(); else _player.resume();
-            setState(() => isPlaying = !isPlaying);
-          },
+          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 80, color: Colors.greenAccent),
+          onPressed: () => isPlaying ? _player.pause() : _player.resume(),
         ),
       ],
     );
@@ -161,23 +148,20 @@ class _DhunlyFinalAppState extends State<DhunlyFinalApp> {
 
   Widget _buildMiniPlayer() {
     return Positioned(
-      bottom: 20, left: 15, right: 15,
+      bottom: 10, left: 10, right: 10,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            height: 70, color: Colors.white.withOpacity(0.1),
+            height: 65, color: Colors.white10,
             padding: EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               children: [
-                ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
-                SizedBox(width: 15),
-                Expanded(child: Text(currentSong['title'], overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold))),
-                IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () {
-                  if (isPlaying) _player.pause(); else _player.resume();
-                  setState(() => isPlaying = !isPlaying);
-                }),
+                ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 45)),
+                SizedBox(width: 10),
+                Expanded(child: Text(currentSong['title'], overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13))),
+                IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _player.pause() : _player.resume()),
               ],
             ),
           ),
