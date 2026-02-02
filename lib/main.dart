@@ -28,9 +28,11 @@ class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
     loadMusic();
   }
 
+  // YAHAN APNA PASTEBIN RAW LINK DALNA HAI
   loadMusic() async {
+    String apiUrl = "https://pastebin.com/raw/S67v8v0Q"; // Agar aapka link ban gaya hai toh yahan badal dein
     try {
-      final res = await http.get(Uri.parse("https://api.jsonsilo.com/public/69094396-e176-474c-8302-3866d56d788e"));
+      final res = await http.get(Uri.parse(apiUrl));
       if (res.statusCode == 200) {
         setState(() {
           songs = json.decode(res.body)['songs'];
@@ -39,6 +41,7 @@ class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
         });
       }
     } catch (e) {
+      print("Error loading music: $e");
       setState(() => isLoading = false);
     }
   }
@@ -57,25 +60,24 @@ class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Gradient
+          // Spotify Style Gradient Background
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.blueGrey.shade900, Colors.black],
+                colors: [Colors.green.withOpacity(0.2), Colors.black],
               ),
             ),
           ),
           SafeArea(
             child: Column(
               children: [
-                // Header
                 Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 ),
-                // Search Bar (Fixed Feature)
+                // Search Bar
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: TextField(
@@ -85,15 +87,15 @@ class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
                       });
                     },
                     decoration: InputDecoration(
-                      hintText: "Search your favorite songs...",
+                      hintText: "Search songs, artists...",
                       prefixIcon: Icon(Icons.search, color: Colors.white70),
                       filled: true,
                       fillColor: Colors.white12,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
                     ),
                   ),
                 ),
-                // Song List
+                // Music List
                 isLoading 
                   ? Expanded(child: Center(child: CircularProgressIndicator(color: Colors.green)))
                   : Expanded(
@@ -104,50 +106,56 @@ class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
                           return ListTile(
                             onTap: () => playMusic(song),
                             leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Image.network(song['img'], width: 50, height: 50, fit: BoxFit.cover),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(song['img'], width: 50, height: 50, fit: BoxFit.cover, 
+                                errorBuilder: (c, e, s) => Icon(Icons.music_note, size: 50)),
                             ),
-                            title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.w500)),
+                            title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(song['artist'], style: TextStyle(color: Colors.grey)),
-                            trailing: Icon(Icons.more_vert, color: Colors.grey),
+                            trailing: Icon(Icons.play_circle_fill, color: Colors.green, size: 30),
                           );
                         },
                       ),
                     ),
-                // Floating Bottom Player (Spotify Style)
+                // Spotify Style Floating Player
                 if (currentSong != null)
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: Image.network(currentSong['img'], width: 45, height: 45),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(currentSong['title'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                              Text(currentSong['artist'], style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            ],
+                  GestureDetector(
+                    onTap: () {
+                      // Yahan aap full screen player ka logic bhi daal sakte ho baad mein
+                    },
+                    child: Container(
+                      margin: EdgeInsets.all(8),
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(currentSong['img'], width: 45, height: 45, fit: BoxFit.cover),
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 30, color: Colors.white),
-                          onPressed: () {
-                            if (isPlaying) _player.pause(); else _player.resume();
-                            setState(() => isPlaying = !isPlaying);
-                          },
-                        ),
-                      ],
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(currentSong['title'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                                Text(currentSong['artist'], style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 35, color: Colors.white),
+                            onPressed: () {
+                              if (isPlaying) _player.pause(); else _player.resume();
+                              setState(() => isPlaying = !isPlaying);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -155,15 +163,14 @@ class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
           ),
         ],
       ),
-      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.grey,
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Library'),
+          BottomNavigationBarItem(icon: Icon(Icons.explore_outlined), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.library_music_outlined), label: 'Library'),
         ],
       ),
     );
