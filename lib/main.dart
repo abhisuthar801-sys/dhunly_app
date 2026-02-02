@@ -5,19 +5,21 @@ import 'dart:ui';
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyProDirect(),
+      home: DhunlySpotifyGlass(),
     ));
 
-class DhunlyProDirect extends StatefulWidget {
+class DhunlySpotifyGlass extends StatefulWidget {
   @override
-  _DhunlyProDirectState createState() => _DhunlyProDirectState();
+  _DhunlySpotifyGlassState createState() => _DhunlySpotifyGlassState();
 }
 
-class _DhunlyProDirectState extends State<DhunlyProDirect> {
+class _DhunlySpotifyGlassState extends State<DhunlySpotifyGlass> {
   final AudioPlayer _player = AudioPlayer();
-  
-  // PASTEBIN KI ZARURAT NAHI - LIST YAHAN HAI
-  List allSongs = [
+  int _selectedIndex = 0;
+  bool isPlaying = false;
+  var currentSong;
+
+  List songs = [
     {
       "title": "Door Des Koi Kudi",
       "artist": "Kaka",
@@ -25,163 +27,163 @@ class _DhunlyProDirectState extends State<DhunlyProDirect> {
       "img": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500&q=80"
     },
     {
-      "title": "Cloud Test Track",
-      "artist": "Dhunly Pro",
+      "title": "Starboy",
+      "artist": "The Weeknd",
       "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      "img": "https://picsum.photos/200/200"
-    }
+      "img": "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=500&q=80"
+    },
   ];
-
-  List filteredSongs = [];
-  var currentSong;
-  bool isPlaying = false;
-  Duration duration = Duration.zero;
-  Duration position = Duration.zero;
-  int _currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    filteredSongs = allSongs;
-
-    // Player Listeners
-    _player.onDurationChanged.listen((d) => setState(() => duration = d));
-    _player.onPositionChanged.listen((p) => setState(() => position = p));
-    _player.onPlayerComplete.listen((event) => playNext());
-  }
-
-  void playMusic(song) async {
-    try {
-      await _player.stop();
-      // Cloudinary links ke liye UrlSource best hai
-      await _player.play(UrlSource(song['url']));
-      setState(() {
-        currentSong = song;
-        isPlaying = true;
-      });
-    } catch (e) {
-      print("Error playing song: $e");
-    }
-  }
-
-  void playNext() {
-    int index = allSongs.indexOf(currentSong);
-    if (index < allSongs.length - 1) playMusic(allSongs[index + 1]);
-    else playMusic(allSongs[0]);
-  }
-
-  void playPrevious() {
-    int index = allSongs.indexOf(currentSong);
-    if (index > 0) playMusic(allSongs[index - 1]);
-    else playMusic(allSongs.last);
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF0F0F0F),
       body: Stack(
         children: [
-          // Background Glows for Premium Look
-          Positioned(top: -50, left: -50, child: circleGlow(Colors.deepPurple.withOpacity(0.3))),
-          Positioned(bottom: 100, right: -50, child: circleGlow(Colors.greenAccent.withOpacity(0.2))),
+          // Background Glows (Spotify Vibe)
+          Positioned(top: -100, left: -50, child: _blurCircle(Colors.greenAccent.withOpacity(0.2))),
+          Positioned(bottom: 200, right: -50, child: _blurCircle(Colors.purpleAccent.withOpacity(0.15))),
 
           SafeArea(
-            child: Column(
-              children: [
-                buildHeader(),
-                Expanded(child: _currentIndex == 1 ? buildSearch() : buildSongList()),
+            child: CustomScrollView(
+              slivers: [
+                _buildAppBar(),
+                _buildSearchBox(),
+                _buildSectionTitle("Your Mixes"),
+                _buildHorizontalGrid(),
+                _buildSectionTitle("Recently Played"),
+                _buildSongList(),
               ],
             ),
           ),
-          
-          if (currentSong != null) buildGlassPlayer(),
-        ],
-      ),
-      bottomNavigationBar: buildBottomNav(),
-    );
-  }
 
-  Widget circleGlow(Color color) {
-    return Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)]));
-  }
+          // Floating Glass Player
+          if (currentSong != null) _buildMiniPlayer(),
 
-  Widget buildHeader() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-          IconButton(icon: Icon(Icons.refresh, color: Colors.white54), onPressed: () => setState(() {}))
+          // Glass Bottom Nav
+          _buildGlassBottomNav(),
         ],
       ),
     );
   }
 
-  Widget buildSongList() {
-    return ListView.builder(
-      itemCount: allSongs.length,
-      padding: EdgeInsets.only(bottom: 180),
-      itemBuilder: (context, i) => songTile(allSongs[i]),
+  Widget _blurCircle(Color color) {
+    return Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, color: color), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container(color: Colors.transparent)));
+  }
+
+  Widget _buildAppBar() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text("Good Evening", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+            Row(children: [
+              Icon(Icons.notifications_none_outlined, size: 28),
+              SizedBox(width: 20),
+              CircleAvatar(backgroundImage: NetworkImage("https://picsum.photos/100")),
+            ]),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget buildSearch() {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.all(15),
-          child: TextField(
-            onChanged: (v) => setState(() => filteredSongs = allSongs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList()),
-            decoration: InputDecoration(hintText: "Search songs...", prefixIcon: Icon(Icons.search), filled: true, fillColor: Colors.white10, border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none)),
+  Widget _buildSearchBox() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              height: 55,
+              color: Colors.white.withOpacity(0.05),
+              child: Row(children: [Icon(Icons.search, color: Colors.grey), SizedBox(width: 10), Text("Artists, songs, or podcasts", style: TextStyle(color: Colors.grey))]),
+            ),
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: filteredSongs.length,
-            itemBuilder: (context, i) => songTile(filteredSongs[i]),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 30, 20, 15),
+        child: Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  Widget _buildHorizontalGrid() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 180,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.only(left: 20),
+          itemCount: songs.length,
+          itemBuilder: (context, i) => Container(
+            width: 140,
+            margin: EdgeInsets.only(right: 15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(songs[i]['img'], height: 130, width: 140, fit: BoxFit.cover)),
+                SizedBox(height: 8),
+                Text(songs[i]['title'], style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget songTile(song) {
-    bool isSelected = currentSong == song;
-    return ListTile(
-      onTap: () => playMusic(song),
-      leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(song['img'], width: 55, height: 55, fit: BoxFit.cover)),
-      title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.greenAccent : Colors.white)),
-      subtitle: Text(song['artist'], style: TextStyle(color: Colors.grey[400])),
-      trailing: Icon(isSelected && isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline, color: Colors.greenAccent),
+  Widget _buildSongList() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, i) => ListTile(
+          onTap: () async {
+            await _player.stop();
+            await _player.play(UrlSource(songs[i]['url']));
+            setState(() { currentSong = songs[i]; isPlaying = true; });
+          },
+          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(songs[i]['img'], width: 50, height: 50, fit: BoxFit.cover)),
+          title: Text(songs[i]['title'], style: TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(songs[i]['artist'], style: TextStyle(color: Colors.grey)),
+          trailing: Icon(Icons.more_vert),
+        ),
+        childCount: songs.length,
+      ),
     );
   }
 
-  Widget buildGlassPlayer() {
+  Widget _buildMiniPlayer() {
     return Positioned(
-      bottom: 20, left: 15, right: 15,
+      bottom: 90, left: 10, right: 10,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(15),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            height: 160,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.1))),
-            child: Column(
+            height: 70,
+            color: Colors.white.withOpacity(0.08),
+            padding: EdgeInsets.symmetric(horizontal: 15),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
-                    SizedBox(width: 15),
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis), Text(currentSong['artist'], style: TextStyle(color: Colors.grey, fontSize: 12))])),
-                    IconButton(icon: Icon(Icons.skip_previous), onPressed: playPrevious),
-                    IconButton(icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 45, color: Colors.greenAccent), onPressed: () { if(isPlaying) _player.pause(); else _player.resume(); setState(() => isPlaying = !isPlaying); }),
-                    IconButton(icon: Icon(Icons.skip_next), onPressed: playNext),
-                  ],
-                ),
-                Slider(activeColor: Colors.greenAccent, inactiveColor: Colors.white24, value: position.inSeconds.toDouble(), max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0, onChanged: (v) => _player.seek(Duration(seconds: v.toInt()))),
+                ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 45, height: 45)),
+                SizedBox(width: 12),
+                Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold)), Text(currentSong['artist'], style: TextStyle(fontSize: 12, color: Colors.grey))])),
+                IconButton(icon: Icon(Icons.favorite_border, color: Colors.greenAccent), onPressed: () {}),
+                IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 30), onPressed: () {
+                  if (isPlaying) _player.pause(); else _player.resume();
+                  setState(() => isPlaying = !isPlaying);
+                }),
               ],
             ),
           ),
@@ -190,18 +192,35 @@ class _DhunlyProDirectState extends State<DhunlyProDirect> {
     );
   }
 
-  Widget buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (i) => setState(() => _currentIndex = i),
-      backgroundColor: Colors.black,
-      selectedItemColor: Colors.greenAccent,
-      unselectedItemColor: Colors.grey,
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-      ],
+  Widget _buildGlassBottomNav() {
+    return Positioned(
+      bottom: 20, left: 30, right: 30,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            height: 65,
+            color: Colors.white.withOpacity(0.05),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _navItem(Icons.home_filled, "Home", 0),
+                _navItem(Icons.search, "Search", 1),
+                _navItem(Icons.library_music, "Library", 2),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(IconData icon, String label, int index) {
+    bool isSel = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, color: isSel ? Colors.greenAccent : Colors.grey, size: 28)]),
     );
   }
 }
