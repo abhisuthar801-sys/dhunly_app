@@ -8,21 +8,12 @@ if (localPropertiesFile.exists()) {
 
 def flutterRoot = localProperties.getProperty('flutter.sdk')
 if (flutterRoot == null) {
-    // Codemagic ya CI ke liye default path agar local.properties na ho
-}
-
-def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
-if (flutterVersionCode == null) {
-    flutterVersionCode = '1'
-}
-
-def flutterVersionName = localProperties.getProperty('flutter.versionName')
-if (flutterVersionName == null) {
-    flutterVersionName = '1.0'
+    // Codemagic default path
 }
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+// Ye line sabse zaruri hai
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
@@ -43,12 +34,11 @@ android {
     }
 
     defaultConfig {
-        // APPLICATION ID WAHI HAI JO HUMNE MANIFEST MEIN DALA THA
         applicationId "com.example.dhunly_pro"
         minSdkVersion 21 
         targetSdkVersion 34
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        versionCode 1
+        versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -60,9 +50,7 @@ android {
     }
 }
 
-flutter {
-    source ../..
-}
+// HUMNE NICHE SE 'FLUTTER' BLOCK HATA DIYA HAI KYUNKI WO ERROR DE RAHA THA
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
