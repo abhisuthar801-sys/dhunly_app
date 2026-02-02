@@ -6,15 +6,15 @@ import 'dart:convert';
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyProApp(),
+      home: DhunlyProSpotify(),
     ));
 
-class DhunlyProApp extends StatefulWidget {
+class DhunlyProSpotify extends StatefulWidget {
   @override
-  _DhunlyProAppState createState() => _DhunlyProAppState();
+  _DhunlyProSpotifyState createState() => _DhunlyProSpotifyState();
 }
 
-class _DhunlyProAppState extends State<DhunlyProApp> {
+class _DhunlyProSpotifyState extends State<DhunlyProSpotify> {
   final AudioPlayer _player = AudioPlayer();
   List songs = [];
   List filteredSongs = [];
@@ -25,10 +25,10 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
   @override
   void initState() {
     super.initState();
-    fetchMusic();
+    loadMusic();
   }
 
-  fetchMusic() async {
+  loadMusic() async {
     try {
       final res = await http.get(Uri.parse("https://api.jsonsilo.com/public/69094396-e176-474c-8302-3866d56d788e"));
       if (res.statusCode == 200) {
@@ -55,69 +55,115 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Image.asset('assets/logo.png', height: 40, errorBuilder: (c,e,s) => Text("DHUNLY PRO")),
-        centerTitle: true,
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: EdgeInsets.all(10),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search Songs...",
-                prefixIcon: Icon(Icons.search, color: Colors.blue),
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+          // Background Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.blueGrey.shade900, Colors.black],
               ),
-              onChanged: (v) {
-                setState(() {
-                  filteredSongs = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList();
-                });
-              },
             ),
           ),
-          isLoading 
-            ? Expanded(child: Center(child: CircularProgressIndicator(color: Colors.blue)))
-            : Expanded(
-                child: ListView.builder(
-                  itemCount: filteredSongs.length,
-                  itemBuilder: (ctx, i) => ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(5),
-                      child: Image.network(filteredSongs[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
+          SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+                // Search Bar (Fixed Feature)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        filteredSongs = songs.where((s) => s['title'].toLowerCase().contains(value.toLowerCase())).toList();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Search your favorite songs...",
+                      prefixIcon: Icon(Icons.search, color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.white12,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                     ),
-                    title: Text(filteredSongs[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(filteredSongs[i]['artist'], style: TextStyle(color: Colors.grey)),
-                    trailing: Icon(Icons.play_circle_fill, color: Colors.blue, size: 30),
-                    onTap: () => playMusic(filteredSongs[i]),
                   ),
                 ),
-              ),
-          if (currentSong != null)
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.blueGrey[900],
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20))
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(5), child: Image.network(currentSong['img'], width: 50, height: 50)),
-                  SizedBox(width: 15),
-                  Expanded(child: Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                  IconButton(
-                    icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40, color: Colors.blue),
-                    onPressed: () {
-                      if (isPlaying) _player.pause(); else _player.resume();
-                      setState(() => isPlaying = !isPlaying);
-                    },
-                  )
-                ],
-              ),
-            )
+                // Song List
+                isLoading 
+                  ? Expanded(child: Center(child: CircularProgressIndicator(color: Colors.green)))
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: filteredSongs.length,
+                        itemBuilder: (context, index) {
+                          final song = filteredSongs[index];
+                          return ListTile(
+                            onTap: () => playMusic(song),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.network(song['img'], width: 50, height: 50, fit: BoxFit.cover),
+                            ),
+                            title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.w500)),
+                            subtitle: Text(song['artist'], style: TextStyle(color: Colors.grey)),
+                            trailing: Icon(Icons.more_vert, color: Colors.grey),
+                          );
+                        },
+                      ),
+                    ),
+                // Floating Bottom Player (Spotify Style)
+                if (currentSong != null)
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.network(currentSong['img'], width: 45, height: 45),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(currentSong['title'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                              Text(currentSong['artist'], style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 30, color: Colors.white),
+                          onPressed: () {
+                            if (isPlaying) _player.pause(); else _player.resume();
+                            setState(() => isPlaying = !isPlaying);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      // Bottom Navigation Bar
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Library'),
         ],
       ),
     );
