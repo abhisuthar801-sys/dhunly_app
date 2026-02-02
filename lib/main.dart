@@ -57,7 +57,7 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Image.asset('assets/logo.png', height: 40), // AAPKA LOGO
+        title: Image.asset('assets/logo.png', height: 40, errorBuilder: (c,e,s) => Text("DHUNLY PRO")),
         centerTitle: true,
       ),
       body: Column(
@@ -69,7 +69,7 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
                 hintText: "Search Songs...",
                 prefixIcon: Icon(Icons.search, color: Colors.blue),
                 filled: true,
-                fillColor: Colors.white12,
+                fillColor: Colors.white10,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
               ),
               onChanged: (v) {
@@ -80,32 +80,42 @@ class _DhunlyProAppState extends State<DhunlyProApp> {
             ),
           ),
           isLoading 
-            ? Expanded(child: Center(child: CircularProgressIndicator()))
+            ? Expanded(child: Center(child: CircularProgressIndicator(color: Colors.blue)))
             : Expanded(
                 child: ListView.builder(
                   itemCount: filteredSongs.length,
                   itemBuilder: (ctx, i) => ListTile(
-                    leading: CircleAvatar(backgroundImage: NetworkImage(filteredSongs[i]['img'])),
-                    title: Text(filteredSongs[i]['title']),
-                    subtitle: Text(filteredSongs[i]['artist']),
-                    trailing: Icon(Icons.play_arrow, color: Colors.blue),
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: Image.network(filteredSongs[i]['img'], width: 50, height: 50, fit: BoxFit.cover),
+                    ),
+                    title: Text(filteredSongs[i]['title'], style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(filteredSongs[i]['artist'], style: TextStyle(color: Colors.grey)),
+                    trailing: Icon(Icons.play_circle_fill, color: Colors.blue, size: 30),
                     onTap: () => playMusic(filteredSongs[i]),
                   ),
                 ),
               ),
           if (currentSong != null)
             Container(
-              color: Colors.blueGrey[900],
-              child: ListTile(
-                leading: Image.network(currentSong['img']),
-                title: Text(currentSong['title']),
-                trailing: IconButton(
-                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-                  onPressed: () {
-                    if (isPlaying) _player.pause(); else _player.resume();
-                    setState(() => isPlaying = !isPlaying);
-                  },
-                ),
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey[900],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(borderRadius: BorderRadius.circular(5), child: Image.network(currentSong['img'], width: 50, height: 50)),
+                  SizedBox(width: 15),
+                  Expanded(child: Text(currentSong['title'], style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                  IconButton(
+                    icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40, color: Colors.blue),
+                    onPressed: () {
+                      if (isPlaying) _player.pause(); else _player.resume();
+                      setState(() => isPlaying = !isPlaying);
+                    },
+                  )
+                ],
               ),
             )
         ],
