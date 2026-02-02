@@ -1,158 +1,177 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyProFinal(),
+      home: DhunlyProUltimate(),
     ));
 
-class DhunlyProFinal extends StatefulWidget {
+class DhunlyProUltimate extends StatefulWidget {
   @override
-  _DhunlyProFinalState createState() => _DhunlyProFinalState();
+  _DhunlyProUltimateState createState() => _DhunlyProUltimateState();
 }
 
-class _DhunlyProFinalState extends State<DhunlyProFinal> {
+class _DhunlyProUltimateState extends State<DhunlyProUltimate> {
+  int _currentIndex = 0;
   final AudioPlayer _player = AudioPlayer();
-  List songs = [
-    {
-      "title": "Kesariya Pro",
-      "artist": "Arijit Singh",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      "img": "https://picsum.photos/id/1/200/200"
-    },
-    {
-      "title": "Raataan Lambiyan",
-      "artist": "Jubin Nautiyal",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-      "img": "https://picsum.photos/id/2/200/200"
-    },
-    {
-      "title": "Manike Style",
-      "artist": "Yohani",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-      "img": "https://picsum.photos/id/3/200/200"
-    }
-  ];
-  
-  List filteredSongs = [];
+  List allSongs = []; // Pastebin se aane wale saare gaane
+  List filteredSongs = []; // Search ke baad dikhne wale gaane
+  bool isLoading = true;
   var currentSong;
   bool isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    filteredSongs = songs; // App khulte hi list dikhegi
+    fetchSongs();
+  }
+
+  // Pastebin se data khichne wala function
+  fetchSongs() async {
+    // YAHAN APNA PASTEBIN RAW LINK DALO
+    String url = "https://pastebin.com/raw/S67v8v0Q"; 
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        setState(() {
+          allSongs = data['songs'];
+          filteredSongs = allSongs;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error: $e");
+      setState(() => isLoading = false);
+    }
   }
 
   void playMusic(song) async {
-    try {
-      await _player.stop();
-      await _player.play(UrlSource(song['url']));
-      setState(() {
-        currentSong = song;
-        isPlaying = true;
-      });
-    } catch (e) {
-      print("Error: $e");
-    }
+    await _player.stop();
+    await _player.play(UrlSource(song['url']));
+    setState(() {
+      currentSong = song;
+      isPlaying = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Teeno screens ka logic
+    List<Widget> screens = [
+      buildHomeScreen(), // Index 0
+      buildSearchScreen(), // Index 1
+      Center(child: Text("Library: Your Favorites Here", style: TextStyle(fontSize: 20))), // Index 2
+    ];
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Spotify Background Gradient
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.green.withOpacity(0.3), Colors.black],
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                ),
-                // Search Bar
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: TextField(
-                    onChanged: (v) {
-                      setState(() {
-                        filteredSongs = songs.where((s) => s['title'].toLowerCase().contains(v.toLowerCase())).toList();
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Search songs...",
-                      prefixIcon: Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white10,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                    ),
-                  ),
-                ),
-                // Song List
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredSongs.length,
-                    itemBuilder: (context, index) {
-                      final song = filteredSongs[index];
-                      return ListTile(
-                        onTap: () => playMusic(song),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(song['img'], width: 50, height: 50, fit: BoxFit.cover),
-                        ),
-                        title: Text(song['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(song['artist'], style: TextStyle(color: Colors.grey)),
-                        trailing: Icon(Icons.play_circle_outline, color: Colors.green),
-                      );
-                    },
-                  ),
-                ),
-                // Bottom Player Bar
-                if (currentSong != null)
-                  Container(
-                    margin: EdgeInsets.all(10),
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(color: Colors.grey[900], borderRadius: BorderRadius.circular(15)),
-                    child: Row(
-                      children: [
-                        ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 40, height: 40)),
-                        SizedBox(width: 15),
-                        Expanded(child: Text(currentSong['title'], style: TextStyle(fontSize: 14))),
-                        IconButton(
-                          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, size: 30),
-                          onPressed: () {
-                            if (isPlaying) _player.pause(); else _player.resume();
-                            setState(() => isPlaying = !isPlaying);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          screens[_currentIndex], // Current selected screen dikhayega
+          if (currentSong != null) buildMiniPlayer(), // Niche wala player
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.white,
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        selectedItemColor: Colors.green,
         unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.black,
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
           BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Library"),
         ],
+      ),
+    );
+  }
+
+  // --- Screens Ke Widgets ---
+
+  Widget buildHomeScreen() {
+    return Column(
+      children: [
+        SizedBox(height: 50),
+        Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+        Expanded(
+          child: isLoading 
+            ? Center(child: CircularProgressIndicator(color: Colors.green))
+            : ListView.builder(
+                itemCount: allSongs.length,
+                itemBuilder: (context, i) => songTile(allSongs[i]),
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildSearchScreen() {
+    return SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  filteredSongs = allSongs.where((s) => 
+                    s['title'].toLowerCase().contains(value.toLowerCase())).toList();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Search Songs or Artists",
+                prefixIcon: Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white10,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: filteredSongs.length,
+              itemBuilder: (context, i) => songTile(filteredSongs[i]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget songTile(song) {
+    return ListTile(
+      onTap: () => playMusic(song),
+      leading: Image.network(song['img'], width: 50, height: 50, fit: BoxFit.cover),
+      title: Text(song['title']),
+      subtitle: Text(song['artist']),
+      trailing: Icon(Icons.play_arrow, color: Colors.green),
+    );
+  }
+
+  Widget buildMiniPlayer() {
+    return Positioned(
+      bottom: 0, left: 0, right: 0,
+      child: Container(
+        color: Colors.grey[900],
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        child: Row(
+          children: [
+            Image.network(currentSong['img'], width: 40, height: 40),
+            SizedBox(width: 10),
+            Expanded(child: Text(currentSong['title'])),
+            IconButton(
+              icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+              onPressed: () {
+                if (isPlaying) _player.pause(); else _player.resume();
+                setState(() => isPlaying = !isPlaying);
+              },
+            )
+          ],
+        ),
       ),
     );
   }
