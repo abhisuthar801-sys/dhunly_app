@@ -108,6 +108,7 @@ class _DhunlyAppState extends State<DhunlyApp> {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: TextField(
             onSubmitted: (v) => searchAndPlay(v),
+            style: TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: "Search song or artist...",
               prefixIcon: Icon(Icons.search, color: Colors.greenAccent),
@@ -130,7 +131,10 @@ class _DhunlyAppState extends State<DhunlyApp> {
       children: [
         ClipRRect(borderRadius: BorderRadius.circular(25), child: Image.network(currentSong['img'], height: 260, width: 260, fit: BoxFit.cover)),
         SizedBox(height: 25),
-        Text(currentSong['title'], style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(currentSong['title'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2),
+        ),
         Text(currentSong['artist'], style: TextStyle(color: Colors.grey)),
         Slider(
           activeColor: Colors.greenAccent,
@@ -158,7 +162,7 @@ class _DhunlyAppState extends State<DhunlyApp> {
             padding: EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               children: [
-                ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 45)),
+                ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 45, height: 45, fit: BoxFit.cover)),
                 SizedBox(width: 10),
                 Expanded(child: Text(currentSong['title'], overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13))),
                 IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _player.pause() : _player.resume()),
