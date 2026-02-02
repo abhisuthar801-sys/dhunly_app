@@ -1,28 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt_exp;
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:ui';
 
 void main() => runApp(MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: ThemeData.dark(),
-  home: DhunlyPremium(),
-));
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: DhunlyPro(),
+    ));
 
-class DhunlyPremium extends StatefulWidget {
+class DhunlyPro extends StatefulWidget {
   @override
-  _DhunlyPremiumState createState() => _DhunlyPremiumState();
+  _DhunlyProState createState() => _DhunlyProState();
 }
 
-class _DhunlyPremiumState extends State<DhunlyPremium> {
-  final yt_exp.YoutubeExplode yt = yt_exp.YoutubeExplode();
+class _DhunlyProState extends State<DhunlyPro> {
   final AudioPlayer _player = AudioPlayer();
-  
   bool isPlaying = false;
-  bool isLoading = false;
-  var currentSong;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
+
+  // AAPKI PLAYLIST (Yahan aap aur gaane add kar sakte hain)
+  final List<Map<String, String>> playlist = [
+    {
+      "title": "Kaka - Temporary Pyar",
+      "artist": "Kaka",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "img": "https://i.ibb.co/v3mX9Dq/album1.jpg"
+    },
+    {
+      "title": "Sidhu - 295",
+      "artist": "Sidhu Moose Wala",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "img": "https://i.ibb.co/yYyYyYy/album2.jpg"
+    }
+  ];
+
+  int currentIndex = 0;
 
   @override
   void initState() {
@@ -32,68 +45,38 @@ class _DhunlyPremiumState extends State<DhunlyPremium> {
     _player.onPlayerStateChanged.listen((s) => setState(() => isPlaying = s == PlayerState.playing));
   }
 
-  void searchAndPlay(String query) async {
-    if (query.isEmpty) return;
-    setState(() => isLoading = true);
-    try {
-      var searchList = await yt.search.search(query);
-      if (searchList.isNotEmpty) {
-        var video = searchList.first;
-        var manifest = await yt.videos.streamsClient.getManifest(video.id);
-        var url = manifest.audioOnly.withHighestBitrate().url;
+  void playMusic(String url) async {
+    await _player.play(UrlSource(url));
+  }
 
-        await _player.play(UrlSource(url.toString()));
-        setState(() {
-          currentSong = {
-            "title": video.title,
-            "artist": video.author,
-            "img": video.thumbnails.highResUrl,
-          };
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
-    }
+  String formatTime(Duration d) {
+    return d.inMinutes.remainder(60).toString().padLeft(2, '0') + ":" + 
+           d.inSeconds.remainder(60).toString().padLeft(2, '0');
   }
 
   @override
   Widget build(BuildContext context) {
+    var song = playlist[currentIndex];
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Glow Fixed
-          Positioned(
-            top: -100, 
-            left: -100, 
-            child: Container(
-              width: 300, 
-              height: 300, 
-              decoration: BoxDecoration(
-                shape: BoxShape.circle, 
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.greenAccent.withOpacity(0.15),
-                    blurRadius: 100,
-                    spreadRadius: 50,
-                  )
-                ],
-              ),
-            ),
-          ),
+          // Background Glow
+          Positioned(top: -50, left: -50, child: Container(width: 250, height: 250, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.greenAccent.withOpacity(0.2), blurRadius: 100))),
           
           SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
-                ),
-                _buildSearchField(),
-                if (isLoading) LinearProgressIndicator(color: Colors.greenAccent),
-                Expanded(child: _buildPlayerUI()),
-                if (currentSong != null) _buildMiniPlayer(),
+                _buildHeader(),
+                SizedBox(height: 20),
+                _buildAlbumArt(song['img']!),
+                SizedBox(height: 30),
+                _buildSongInfo(song['title']!, song['artist']!),
+                _buildSeekBar(),
+                _buildControls(),
+                Spacer(),
+                _buildPlaylistSection(),
               ],
             ),
           ),
@@ -102,64 +85,106 @@ class _DhunlyPremiumState extends State<DhunlyPremium> {
     );
   }
 
-  Widget _buildSearchField() {
+  Widget _buildHeader() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: TextField(
-        onSubmitted: (v) => searchAndPlay(v),
-        decoration: InputDecoration(
-          hintText: "Search any song...",
-          prefixIcon: Icon(Icons.search, color: Colors.greenAccent),
-          filled: true,
-          fillColor: Colors.white10,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlayerUI() {
-    if (currentSong == null) return Center(child: Text("Kaka, Sidhu ya Divine search karo!"));
-    return SingleChildScrollView(
-      child: Column(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SizedBox(height: 30),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20), 
-            child: Image.network(currentSong['img'], height: 250, width: 250, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.music_note, size: 100))
-          ),
-          SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(currentSong['title'], style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2),
-          ),
-          Text(currentSong['artist'], style: TextStyle(color: Colors.grey)),
-          Slider(
-            activeColor: Colors.greenAccent,
-            value: position.inSeconds.toDouble(),
-            max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
-            onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
-          ),
-          IconButton(
-            icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 70, color: Colors.greenAccent),
-            onPressed: () => isPlaying ? _player.pause() : _player.resume(),
-          ),
+          Icon(Icons.keyboard_arrow_down, size: 30),
+          Text("DHUNLY PRO", style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.bold)),
+          Icon(Icons.more_vert),
         ],
       ),
     );
   }
 
-  Widget _buildMiniPlayer() {
+  Widget _buildAlbumArt(String img) {
     return Container(
-      height: 75,
-      margin: EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(15)),
-      child: Center(
-        child: ListTile(
-          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
-          title: Text(currentSong['title'], maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _player.pause() : _player.resume()),
+      height: 280, width: 280,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 20, spreadRadius: 5)],
+        image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover),
+      ),
+    );
+  }
+
+  Widget _buildSongInfo(String title, String artist) {
+    return Column(
+      children: [
+        Text(title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Text(artist, style: TextStyle(fontSize: 16, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildSeekBar() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      child: Column(
+        children: [
+          Slider(
+            activeColor: Colors.greenAccent,
+            inactiveColor: Colors.white10,
+            value: position.inSeconds.toDouble(),
+            max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
+            onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(formatTime(position)),
+                Text(formatTime(duration)),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControls() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(icon: Icon(Icons.skip_previous, size: 40), onPressed: () {}),
+        SizedBox(width: 20),
+        IconButton(
+          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
+          iconSize: 80,
+          color: Colors.greenAccent,
+          onPressed: () => isPlaying ? _player.pause() : playMusic(playlist[currentIndex]['url']!),
         ),
+        SizedBox(width: 20),
+        IconButton(icon: Icon(Icons.skip_next, size: 40), onPressed: () {}),
+      ],
+    );
+  }
+
+  Widget _buildPlaylistSection() {
+    return Container(
+      height: 150,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30))
+      ),
+      child: ListView.builder(
+        itemCount: playlist.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: Image.network(playlist[index]['img']!, width: 40),
+            title: Text(playlist[index]['title']!),
+            subtitle: Text(playlist[index]['artist']!),
+            onTap: () {
+              setState(() => currentIndex = index);
+              playMusic(playlist[index]['url']!);
+            },
+          );
+        },
       ),
     );
   }
