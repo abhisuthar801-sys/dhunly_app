@@ -63,8 +63,25 @@ class _DhunlyPremiumState extends State<DhunlyPremium> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Glow
-          Positioned(top: -100, left: -100, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.greenAccent.withOpacity(0.15), blurRadius: 100))),
+          // Background Glow Fixed
+          Positioned(
+            top: -100, 
+            left: -100, 
+            child: Container(
+              width: 300, 
+              height: 300, 
+              decoration: BoxDecoration(
+                shape: BoxShape.circle, 
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.greenAccent.withOpacity(0.15),
+                    blurRadius: 100,
+                    spreadRadius: 50,
+                  )
+                ],
+              ),
+            ),
+          ),
           
           SafeArea(
             child: Column(
@@ -107,9 +124,15 @@ class _DhunlyPremiumState extends State<DhunlyPremium> {
       child: Column(
         children: [
           SizedBox(height: 30),
-          ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(currentSong['img'], height: 250, width: 250, fit: BoxFit.cover)),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20), 
+            child: Image.network(currentSong['img'], height: 250, width: 250, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.music_note, size: 100))
+          ),
           SizedBox(height: 20),
-          Text(currentSong['title'], style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(currentSong['title'], style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center, maxLines: 2),
+          ),
           Text(currentSong['artist'], style: TextStyle(color: Colors.grey)),
           Slider(
             activeColor: Colors.greenAccent,
@@ -128,13 +151,15 @@ class _DhunlyPremiumState extends State<DhunlyPremium> {
 
   Widget _buildMiniPlayer() {
     return Container(
-      height: 70,
+      height: 75,
       margin: EdgeInsets.all(10),
       decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
-        leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'])),
-        title: Text(currentSong['title'], maxLines: 1),
-        trailing: IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _player.pause() : _player.resume()),
+      child: Center(
+        child: ListTile(
+          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
+          title: Text(currentSong['title'], maxLines: 1, overflow: TextOverflow.ellipsis),
+          trailing: IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _player.pause() : _player.resume()),
+        ),
       ),
     );
   }
