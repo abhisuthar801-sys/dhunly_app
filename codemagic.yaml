@@ -1,53 +1,187 @@
-workflows:
-  android-workflow:
-    name: Dhunly Final Fix
-    max_build_duration: 60
-    instance_type: mac_mini_m2
-    environment:
-      flutter: stable
-      java: 17
-    scripts:
-      - name: Create Android Project & Set Permissions
-        script: |
-          # 1. Android folder agar nahi hai toh banao
-          flutter create . --platforms android
-          
-          # 2. Permission file ko overwrite karo sahi data ke saath
-          cat <<EOF > android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <application
-                  android:label="Dhunly"
-                  android:name="\${applicationName}"
-                  android:icon="@mipmap/ic_launcher"
-                  android:usesCleartextTraffic="true">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
-                      <meta-data
-                        android:name="io.flutter.embedding.android.NormalTheme"
-                        android:resource="@style/NormalTheme"
-                        />
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
-              </application>
-          </manifest>
-          EOF
-      - name: Get dependencies
-        script: flutter pub get
-      - name: Build APK
-        script: flutter build apk --debug
-    artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+import 'package:flutter/material.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt_exp;
+import 'package:audioplayers/audioplayers.dart';
+import 'dart:ui';
+
+void main() => runApp(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: DhunlyGlassPro(),
+    ));
+
+class DhunlyGlassPro extends StatefulWidget {
+  @override
+  _DhunlyGlassProState createState() => _DhunlyGlassProState();
+}
+
+class _DhunlyGlassProState extends State<DhunlyGlassPro> {
+  final yt_exp.YoutubeExplode yt = yt_exp.YoutubeExplode();
+  final AudioPlayer _player = AudioPlayer();
+  
+  bool isPlaying = false;
+  bool isLoading = false;
+  var currentSong;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onDurationChanged.listen((d) => setState(() => duration = d));
+    _player.onPositionChanged.listen((p) => setState(() => position = p));
+  }
+
+  // --- YouTube Magic Function ---
+  void searchAndPlay(String query) async {
+    setState(() => isLoading = true);
+    try {
+      var searchList = await yt.search.search(query);
+      if (searchList.isNotEmpty) {
+        var video = searchList.first;
+        var manifest = await yt.videos.streamsClient.getManifest(video.id);
+        var audioStream = manifest.audioOnly.withHighestBitrate();
+
+        await _player.play(UrlSource(audioStream.url.toString()));
+        
+        setState(() {
+          currentSong = {
+            "title": video.title,
+            "artist": video.author,
+            "img": video.thumbnails.highResUrl,
+          };
+          isPlaying = true;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      print("Error: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Background Aesthetic Glow
+          _buildGlow(Colors.blueAccent.withOpacity(0.2), -100, -50),
+          _buildGlow(Colors.purpleAccent.withOpacity(0.1), 300, 200),
+
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildSearchBar(),
+                if (isLoading) LinearProgressIndicator(color: Colors.greenAccent),
+                Expanded(child: _buildMainContent()),
+                if (currentSong != null) _buildMiniPlayer(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlow(Color color, double top, double left) {
+    return Positioned(top: top, left: left, child: Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: color, blurRadius: 100, spreadRadius: 50)])));
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          Icon(Icons.account_circle, size: 35, color: Colors.greenAccent),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: TextField(
+            onSubmitted: (v) => searchAndPlay(v),
+            decoration: InputDecoration(
+              hintText: "Search any song...",
+              prefixIcon: Icon(Icons.search, color: Colors.greenAccent),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.05),
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    if (currentSong == null) return Center(child: Text("Search karo aur music bajao 🎧", style: TextStyle(color: Colors.grey)));
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(currentSong['img'], height: 250, width: 250, fit: BoxFit.cover)),
+        SizedBox(height: 20),
+        Text(currentSong['title'], textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(currentSong['artist'], style: TextStyle(color: Colors.grey)),
+        _buildControls(),
+      ],
+    );
+  }
+
+  Widget _buildControls() {
+    return Column(
+      children: [
+        Slider(
+          activeColor: Colors.greenAccent,
+          value: position.inSeconds.toDouble(),
+          max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
+          onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
+        ),
+        IconButton(
+          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 80, color: Colors.greenAccent),
+          onPressed: () {
+            if (isPlaying) _player.pause(); else _player.resume();
+            setState(() => isPlaying = !isPlaying);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniPlayer() {
+    return Positioned(
+      bottom: 20, left: 15, right: 15,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            height: 70, color: Colors.white.withOpacity(0.08),
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                Image.network(currentSong['img'], width: 50),
+                SizedBox(width: 10),
+                Expanded(child: Text(currentSong['title'], overflow: TextOverflow.ellipsis)),
+                IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () {
+                  if (isPlaying) _player.pause(); else _player.resume();
+                  setState(() => isPlaying = !isPlaying);
+                }),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
