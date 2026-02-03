@@ -1,7 +1,8 @@
 name: dhunly_pro
-description: Modern Music Streaming App
-version: 1.0.0+1
+description: A professional transparent music player app.
 publish_to: 'none'
+
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -9,9 +10,24 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  # Gaane bajane ke liye sabse stable package
   audioplayers: ^5.2.1
+
+  # Website se data fetch karne ke liye (future use ke liye)
   http: ^1.1.0
+
+  # Glassmorphism/Transparency effects ke liye built-in hai, 
+  # par icons ke liye ye zaroori hai:
   cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true
+
+  # Agar aapne koi local images ya fonts daale hain toh yahan niche enable karein, 
+  # warna default settings sahi hain.
