@@ -1,60 +1,90 @@
 import 'package:flutter/material.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt_exp;
 import 'package:audioplayers/audioplayers.dart';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyFullApp(),
+      home: DhunlyUltimate(),
     ));
 
-class DhunlyFullApp extends StatefulWidget {
+class DhunlyUltimate extends StatefulWidget {
   @override
-  _DhunlyFullAppState createState() => _DhunlyFullAppState();
+  _DhunlyUltimateState createState() => _DhunlyUltimateState();
 }
 
-class _DhunlyFullAppState extends State<DhunlyFullApp> {
+class _DhunlyUltimateState extends State<DhunlyUltimate> {
+  final yt_exp.YoutubeExplode yt = yt_exp.YoutubeExplode();
   final AudioPlayer _player = AudioPlayer();
   bool isPlaying = false;
-  int currentIndex = 0;
+  bool isLoading = false;
+  var currentSong;
 
-  // Zyada Songs aur Categories
-  final List<Map<String, String>> topHits = [
-    {"title": "Temporary Pyar", "artist": "Kaka", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", "img": "https://i.pravatar.cc/150?u=1"},
-    {"title": "Elevated", "artist": "Shubh", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", "img": "https://i.pravatar.cc/150?u=2"},
-    {"title": "295", "artist": "Sidhu Moose Wala", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", "img": "https://i.pravatar.cc/150?u=3"},
-  ];
+  // Search function jo YouTube se gaana layega
+  void searchAndPlay(String query) async {
+    if (query.isEmpty) return;
+    setState(() => isLoading = true);
+    try {
+      var searchList = await yt.search.search(query);
+      if (searchList.isNotEmpty) {
+        var video = searchList.first;
+        var manifest = await yt.videos.streamsClient.getManifest(video.id);
+        var url = manifest.audioOnly.withHighestBitrate().url;
+
+        await _player.play(UrlSource(url.toString()));
+        setState(() {
+          currentSong = {
+            "title": video.title,
+            "artist": video.author,
+            "img": video.thumbnails.highResUrl,
+          };
+          isLoading = false;
+          isPlaying = true;
+        });
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF090909),
+      backgroundColor: Color(0xFF0F0F0F),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTopBar(),
-              _buildSearchBar(),
-              _buildSectionTitle("Your Top Hits"),
-              _buildHorizontalList(),
-              _buildSectionTitle("Recent Playlists"),
-              _buildVerticalList(),
-            ],
-          ),
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildSearchBar(),
+            if (isLoading) LinearProgressIndicator(color: Colors.greenAccent),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle("Trending Now"),
+                    _buildHorizontalScroll(),
+                    _buildSectionTitle("Popular Artists"),
+                    _buildArtistList(),
+                  ],
+                ),
+              ),
+            ),
+            if (currentSong != null) _buildMiniPlayer(),
+          ],
         ),
       ),
-      bottomNavigationBar: _buildBottomPlayer(),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildHeader() {
     return Padding(
       padding: EdgeInsets.all(20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text("Dhunly Pro", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
-          CircleAvatar(backgroundImage: NetworkImage("https://i.pravatar.cc/150?u=9")),
+          Text("Dhunly Pro", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
+          Icon(Icons.settings, color: Colors.grey),
         ],
       ),
     );
@@ -62,12 +92,15 @@ class _DhunlyFullAppState extends State<DhunlyFullApp> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 15),
-        decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(15)),
-        child: TextField(
-          decoration: InputDecoration(hintText: "Search Songs, Artists...", border: InputBorder.none, icon: Icon(Icons.search, color: Colors.greenAccent)),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: TextField(
+        onSubmitted: (v) => searchAndPlay(v),
+        decoration: InputDecoration(
+          hintText: "Search songs, artists...",
+          prefixIcon: Icon(Icons.search, color: Colors.greenAccent),
+          filled: true,
+          fillColor: Colors.white10,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
         ),
       ),
     );
@@ -75,82 +108,64 @@ class _DhunlyFullAppState extends State<DhunlyFullApp> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: EdgeInsets.only(left: 20, top: 30, bottom: 15),
+      padding: EdgeInsets.only(left: 20, top: 20, bottom: 10),
       child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildHorizontalList() {
+  Widget _buildHorizontalScroll() {
     return Container(
-      height: 200,
+      height: 180,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.only(left: 20),
-        itemCount: topHits.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => _play(index),
-            child: Container(
-              width: 150,
-              margin: EdgeInsets.only(right: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(topHits[index]['img']!, height: 150, width: 150, fit: BoxFit.cover)),
-                  SizedBox(height: 8),
-                  Text(topHits[index]['title']!, style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-                ],
-              ),
-            ),
-          );
-        },
+        itemCount: 5,
+        itemBuilder: (context, i) => Container(
+          width: 140,
+          margin: EdgeInsets.only(right: 15),
+          decoration: BoxDecoration(
+            color: Colors.white10,
+            borderRadius: BorderRadius.circular(15),
+            image: DecorationImage(image: NetworkImage("https://picsum.photos/200/300?random=$i"), fit: BoxFit.cover),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildVerticalList() {
+  Widget _buildArtistList() {
     return ListView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      itemCount: topHits.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(topHits[index]['img']!, width: 50, height: 50, fit: BoxFit.cover)),
-          title: Text(topHits[index]['title']!),
-          subtitle: Text(topHits[index]['artist']!),
-          trailing: Icon(Icons.play_circle_fill, color: Colors.greenAccent),
-          onTap: () => _play(index),
-        );
-      },
-    );
-  }
-
-  Widget _buildBottomPlayer() {
-    var current = topHits[currentIndex];
-    return Container(
-      height: 80,
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(color: Colors.black, border: Border(top: BorderSide(color: Colors.white12))),
-      child: Row(
-        children: [
-          CircleAvatar(backgroundImage: NetworkImage(current['img']!)),
-          SizedBox(width: 15),
-          Expanded(child: Text(current['title']!, overflow: TextOverflow.ellipsis)),
-          IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _pause() : _play(currentIndex)),
-          IconButton(icon: Icon(Icons.skip_next), onPressed: () => _play((currentIndex + 1) % topHits.length)),
-        ],
+      itemCount: 3,
+      itemBuilder: (context, i) => ListTile(
+        leading: CircleAvatar(backgroundColor: Colors.greenAccent, child: Icon(Icons.person, color: Colors.black)),
+        title: Text(i == 0 ? "Kaka" : i == 1 ? "Sidhu" : "Divine"),
+        subtitle: Text("Artist"),
+        trailing: Icon(Icons.play_arrow),
+        onTap: () => searchAndPlay(i == 0 ? "Kaka" : i == 1 ? "Sidhu Moose Wala" : "Divine"),
       ),
     );
   }
 
-  void _play(int index) async {
-    setState(() => currentIndex = index);
-    await _player.play(UrlSource(topHits[index]['url']!));
-    setState(() => isPlaying = true);
-  }
-
-  void _pause() async {
-    await _player.pause();
-    setState(() => isPlaying = false);
+  Widget _buildMiniPlayer() {
+    return Container(
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(color: Colors.black, border: Border(top: BorderSide(color: Colors.white12))),
+      child: Row(
+        children: [
+          ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
+          SizedBox(width: 15),
+          Expanded(child: Text(currentSong['title'], maxLines: 1, overflow: TextOverflow.ellipsis)),
+          IconButton(
+            icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.greenAccent),
+            onPressed: () {
+              if (isPlaying) { _player.pause(); setState(() => isPlaying = false); }
+              else { _player.resume(); setState(() => isPlaying = true); }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
