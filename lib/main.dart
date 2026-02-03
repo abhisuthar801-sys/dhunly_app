@@ -1,191 +1,156 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'dart:ui';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: DhunlyPro(),
+      home: DhunlyFullApp(),
     ));
 
-class DhunlyPro extends StatefulWidget {
+class DhunlyFullApp extends StatefulWidget {
   @override
-  _DhunlyProState createState() => _DhunlyProState();
+  _DhunlyFullAppState createState() => _DhunlyFullAppState();
 }
 
-class _DhunlyProState extends State<DhunlyPro> {
+class _DhunlyFullAppState extends State<DhunlyFullApp> {
   final AudioPlayer _player = AudioPlayer();
   bool isPlaying = false;
-  Duration duration = Duration.zero;
-  Duration position = Duration.zero;
   int currentIndex = 0;
 
-  // AAPKI PREMIUM PLAYLIST
-  final List<Map<String, String>> playlist = [
-    {
-      "title": "Temporary Pyar",
-      "artist": "Kaka",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      "img": "https://i.ibb.co/v3mX9Dq/album1.jpg"
-    },
-    {
-      "title": "295 - High Energy",
-      "artist": "Sidhu Moose Wala",
-      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-      "img": "https://www.w3schools.com/w3images/workshop.jpg"
-    }
+  // Zyada Songs aur Categories
+  final List<Map<String, String>> topHits = [
+    {"title": "Temporary Pyar", "artist": "Kaka", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", "img": "https://i.pravatar.cc/150?u=1"},
+    {"title": "Elevated", "artist": "Shubh", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", "img": "https://i.pravatar.cc/150?u=2"},
+    {"title": "295", "artist": "Sidhu Moose Wala", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", "img": "https://i.pravatar.cc/150?u=3"},
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _player.onDurationChanged.listen((d) => setState(() => duration = d));
-    _player.onPositionChanged.listen((p) => setState(() => position = p));
-    _player.onPlayerStateChanged.listen((s) => setState(() => isPlaying = s == PlayerState.playing));
-  }
-
-  void playMusic(String url) async {
-    await _player.play(UrlSource(url));
-  }
-
-  String formatTime(Duration d) {
-    return d.inMinutes.remainder(60).toString().padLeft(2, '0') + ":" + 
-           d.inSeconds.remainder(60).toString().padLeft(2, '0');
-  }
-
-  @override
   Widget build(BuildContext context) {
-    var song = playlist[currentIndex];
-
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Background Glow (FIXED VERSION)
-          Positioned(
-            top: -50, 
-            left: -50, 
-            child: Container(
-              width: 250, 
-              height: 250, 
-              decoration: BoxDecoration(
-                shape: BoxShape.circle, 
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.greenAccent.withOpacity(0.2),
-                    blurRadius: 100,
-                    spreadRadius: 50
-                  )
-                ]
-              )
-            )
+      backgroundColor: Color(0xFF090909),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopBar(),
+              _buildSearchBar(),
+              _buildSectionTitle("Your Top Hits"),
+              _buildHorizontalList(),
+              _buildSectionTitle("Recent Playlists"),
+              _buildVerticalList(),
+            ],
           ),
-          
-          SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(),
-                SizedBox(height: 20),
-                _buildAlbumArt(song['img']!),
-                SizedBox(height: 20),
-                _buildSongInfo(song['title']!, song['artist']!),
-                _buildSeekBar(),
-                _buildControls(),
-                Expanded(child: _buildPlaylistSection()),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
+      bottomNavigationBar: _buildBottomPlayer(),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildTopBar() {
     return Padding(
       padding: EdgeInsets.all(20),
-      child: Text("DHUNLY PRO", style: TextStyle(letterSpacing: 4, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
-    );
-  }
-
-  Widget _buildAlbumArt(String img) {
-    return Container(
-      height: 250, width: 250,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover),
-        boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 15)]
-      ),
-    );
-  }
-
-  Widget _buildSongInfo(String title, String artist) {
-    return Column(
-      children: [
-        Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-        Text(artist, style: TextStyle(fontSize: 14, color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildSeekBar() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Slider(
-            activeColor: Colors.greenAccent,
-            value: position.inSeconds.toDouble(),
-            max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
-            onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(formatTime(position)),
-                Text(formatTime(duration)),
-              ],
-            ),
-          )
+          Text("Dhunly Pro", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
+          CircleAvatar(backgroundImage: NetworkImage("https://i.pravatar.cc/150?u=9")),
         ],
       ),
     );
   }
 
-  Widget _buildControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(icon: Icon(Icons.skip_previous, size: 40), onPressed: () {
-          if(currentIndex > 0) setState(() => currentIndex--);
-        }),
-        IconButton(
-          icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
-          iconSize: 70, color: Colors.greenAccent,
-          onPressed: () => isPlaying ? _player.pause() : playMusic(playlist[currentIndex]['url']!),
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(15)),
+        child: TextField(
+          decoration: InputDecoration(hintText: "Search Songs, Artists...", border: InputBorder.none, icon: Icon(Icons.search, color: Colors.greenAccent)),
         ),
-        IconButton(icon: Icon(Icons.skip_next, size: 40), onPressed: () {
-          if(currentIndex < playlist.length - 1) setState(() => currentIndex++);
-        }),
-      ],
+      ),
     );
   }
 
-  Widget _buildPlaylistSection() {
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: EdgeInsets.only(left: 20, top: 30, bottom: 15),
+      child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildHorizontalList() {
+    return Container(
+      height: 200,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.only(left: 20),
+        itemCount: topHits.length,
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () => _play(index),
+            child: Container(
+              width: 150,
+              margin: EdgeInsets.only(right: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(topHits[index]['img']!, height: 150, width: 150, fit: BoxFit.cover)),
+                  SizedBox(height: 8),
+                  Text(topHits[index]['title']!, style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildVerticalList() {
     return ListView.builder(
-      itemCount: playlist.length,
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: topHits.length,
       itemBuilder: (context, index) {
         return ListTile(
-          leading: Icon(Icons.music_note, color: Colors.greenAccent),
-          title: Text(playlist[index]['title']!),
-          subtitle: Text(playlist[index]['artist']!),
-          onTap: () {
-            setState(() => currentIndex = index);
-            playMusic(playlist[index]['url']!);
-          },
+          leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(topHits[index]['img']!, width: 50, height: 50, fit: BoxFit.cover)),
+          title: Text(topHits[index]['title']!),
+          subtitle: Text(topHits[index]['artist']!),
+          trailing: Icon(Icons.play_circle_fill, color: Colors.greenAccent),
+          onTap: () => _play(index),
         );
       },
     );
+  }
+
+  Widget _buildBottomPlayer() {
+    var current = topHits[currentIndex];
+    return Container(
+      height: 80,
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(color: Colors.black, border: Border(top: BorderSide(color: Colors.white12))),
+      child: Row(
+        children: [
+          CircleAvatar(backgroundImage: NetworkImage(current['img']!)),
+          SizedBox(width: 15),
+          Expanded(child: Text(current['title']!, overflow: TextOverflow.ellipsis)),
+          IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () => isPlaying ? _pause() : _play(currentIndex)),
+          IconButton(icon: Icon(Icons.skip_next), onPressed: () => _play((currentIndex + 1) % topHits.length)),
+        ],
+      ),
+    );
+  }
+
+  void _play(int index) async {
+    setState(() => currentIndex = index);
+    await _player.play(UrlSource(topHits[index]['url']!));
+    setState(() => isPlaying = true);
+  }
+
+  void _pause() async {
+    await _player.pause();
+    setState(() => isPlaying = false);
   }
 }
