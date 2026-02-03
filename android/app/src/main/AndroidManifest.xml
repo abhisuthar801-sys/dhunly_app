@@ -6,7 +6,7 @@
     <application
         android:label="Dhunly Pro"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@android:drawable/ic_menu_gallery"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true">
         
