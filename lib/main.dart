@@ -2,69 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:ui';
 
-void main() => runApp(DhunlyPro());
+void main() => runApp(DhunlySpotify());
 
-class DhunlyPro extends StatelessWidget {
+class DhunlySpotify extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: MusicPlayerHome(),
+      home: SpotifyHome(),
     );
   }
 }
 
-class MusicPlayerHome extends StatefulWidget {
+class SpotifyHome extends StatefulWidget {
   @override
-  _MusicPlayerHomeState createState() => _MusicPlayerHomeState();
+  _SpotifyHomeState createState() => _SpotifyHomeState();
 }
 
-class _MusicPlayerHomeState extends State<MusicPlayerHome> {
+class _SpotifyHomeState extends State<SpotifyHome> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool isPlaying = false;
+  int currentIndex = 0;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
-  
-  String currentTitle = "Select a Song";
-  String currentArtist = "Dhunly Pro Player";
-  String currentImg = "https://res.cloudinary.com/ds1bcvkop/image/upload/dhunly_songs/poster1.jpg";
 
-  final String cloudName = "ds1bcvkop"; 
-  final String folderName = "dhunly_songs";
-
-  final List<Map<String, String>> songs = List.generate(20, (index) {
-    int id = index + 1;
-    return {
-      "title": "Super Hit Song $id",
-      "artist": "Dhunly Artist",
-      "url": "https://res.cloudinary.com/ds1bcvkop/video/upload/dhunly_songs/song$id.mp3",
-      "img": "https://res.cloudinary.com/ds1bcvkop/image/upload/dhunly_songs/poster$id.jpg"
-    };
-  });
+  // Cloudinary Config (Aapka Cloud Name)
+  final String cloudName = "ds1bcvkop";
+  List<Map<String, String>> songs = [];
+  List<Map<String, String>> filteredSongs = [];
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    // 50 Songs generated automatically
+    songs = List.generate(50, (index) => {
+      "title": "Song ${index + 1}",
+      "artist": "Trending Artist",
+      "url": "https://res.cloudinary.com/$cloudName/video/upload/dhunly_songs/song${index + 1}.mp3",
+      "img": "https://res.cloudinary.com/$cloudName/image/upload/dhunly_songs/poster${index + 1}.jpg"
+    });
+    filteredSongs = songs;
+
     _audioPlayer.onDurationChanged.listen((d) => setState(() => duration = d));
     _audioPlayer.onPositionChanged.listen((p) => setState(() => position = p));
-    _audioPlayer.onPlayerComplete.listen((event) => setState(() => isPlaying = false));
+    _audioPlayer.onPlayerComplete.listen((event) => nextSong());
   }
 
-  void playMusic(String url, String title, String artist, String img) async {
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.play(UrlSource(url));
-      setState(() {
-        isPlaying = true;
-        currentTitle = title;
-        currentArtist = artist;
-        currentImg = img;
-      });
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
+  void playMusic(int index) async {
+    setState(() => currentIndex = index);
+    await _audioPlayer.stop();
+    await _audioPlayer.play(UrlSource(songs[index]['url']!));
+    setState(() => isPlaying = true);
   }
+
+  void nextSong() => playMusic((currentIndex + 1) % songs.length);
+  void prevSong() => playMusic((currentIndex - 1 + songs.length) % songs.length);
 
   @override
   Widget build(BuildContext context) {
@@ -72,99 +66,116 @@ class _MusicPlayerHomeState extends State<MusicPlayerHome> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Fixed Glows
-          Positioned(top: -100, left: -50, child: _buildGlow(Colors.deepPurple)),
-          Positioned(bottom: -100, right: -50, child: _buildGlow(Colors.blueAccent)),
+          // Background Glows
+          Positioned(top: -150, left: -100, child: _glowCircle(Colors.blueAccent)),
+          Positioned(bottom: -150, right: -100, child: _glowCircle(Colors.purpleAccent)),
 
           SafeArea(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+              filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
               child: Column(
                 children: [
-                  _buildAppBar(),
-                  _buildMainPlayerCard(),
-                  _buildSongList(),
+                  _header(),
+                  _searchBar(),
+                  _featuredCard(),
+                  _songListHeader(),
+                  _songList(),
+                  if (isPlaying || position > Duration.zero) _miniPlayer(),
                 ],
               ),
             ),
           ),
         ],
       ),
+      bottomNavigationBar: _bottomNav(),
     );
   }
 
-  // FIX: blurRadius moved inside BoxShadow
-  Widget _buildGlow(Color color) => Container(
-    height: 300, 
-    width: 300, 
+  Widget _glowCircle(Color color) => Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 200, spreadRadius: 100)]));
+
+  Widget _header() => Padding(
+    padding: EdgeInsets.all(20),
+    child: Row(children: [Text("Good Evening", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold))]),
+  );
+
+  Widget _searchBar() => Padding(
+    padding: EdgeInsets.symmetric(horizontal: 20),
+    child: TextField(
+      onChanged: (v) => setState(() => filteredSongs = songs.where((s) => s['title']!.toLowerCase().contains(v.toLowerCase())).toList()),
+      decoration: InputDecoration(
+        hintText: "Search songs, artists...",
+        prefixIcon: Icon(Icons.search),
+        filled: true,
+        fillColor: Colors.white10,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      ),
+    ),
+  );
+
+  Widget _featuredCard() => Container(
+    margin: EdgeInsets.all(20),
+    height: 150,
     decoration: BoxDecoration(
-      shape: BoxShape.circle, 
-      boxShadow: [
-        BoxShadow(color: color.withOpacity(0.5), blurRadius: 100, spreadRadius: 50)
-      ]
-    )
+      borderRadius: BorderRadius.circular(20),
+      gradient: LinearGradient(colors: [Colors.blueAccent.withOpacity(0.4), Colors.transparent]),
+      border: Border.all(color: Colors.white10),
+    ),
+    child: Row(
+      children: [
+        Padding(padding: EdgeInsets.all(15), child: ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(songs[currentIndex]['img']!, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (c,e,s) => Icon(Icons.music_note, size: 80)))),
+        Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text("NOW PLAYING", style: TextStyle(letterSpacing: 2, fontSize: 10, color: Colors.blueAccent)),
+          Text(songs[currentIndex]['title']!, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1),
+          Text(songs[currentIndex]['artist']!, style: TextStyle(color: Colors.white70)),
+        ]))
+      ],
+    ),
   );
 
-  Widget _buildAppBar() => Padding(
-    padding: const EdgeInsets.all(20), 
-    child: Text("DHUNLY PRO", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 3, color: Colors.white70))
+  Widget _songListHeader() => Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), child: Row(children: [Text("Your Library", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))]));
+
+  Widget _songList() => Expanded(
+    child: ListView.builder(
+      itemCount: filteredSongs.length,
+      itemBuilder: (context, index) => ListTile(
+        leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(filteredSongs[index]['img']!, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c,e,s) => Icon(Icons.music_video))),
+        title: Text(filteredSongs[index]['title']!),
+        subtitle: Text(filteredSongs[index]['artist']!),
+        onTap: () => playMusic(songs.indexOf(filteredSongs[index])),
+      ),
+    ),
   );
 
-  Widget _buildMainPlayerCard() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(currentImg, height: 160, width: 160, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.music_note, size: 100))),
-          const SizedBox(height: 15),
-          Text(currentTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(currentArtist, style: const TextStyle(color: Colors.white54)),
-          Slider(
-            activeColor: Colors.blueAccent,
-            inactiveColor: Colors.white24,
-            value: position.inSeconds.toDouble(),
-            max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
-            onChanged: (v) => _audioPlayer.seek(Duration(seconds: v.toInt())),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(icon: const Icon(Icons.skip_previous, size: 35), onPressed: () {}),
-              GestureDetector(
-                onTap: () {
-                  if (isPlaying) _audioPlayer.pause(); else _audioPlayer.resume();
-                  setState(() => isPlaying = !isPlaying);
-                },
-                child: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 70, color: Colors.blueAccent),
-              ),
-              IconButton(icon: const Icon(Icons.skip_next, size: 35), onPressed: () {}),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _miniPlayer() => Container(
+    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    padding: EdgeInsets.all(10),
+    decoration: BoxDecoration(color: Colors.grey.shade900, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white10)),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(songs[currentIndex]['img']!, width: 45, height: 45, fit: BoxFit.cover)),
+            SizedBox(width: 15),
+            Expanded(child: Text(songs[currentIndex]['title']!, style: TextStyle(fontWeight: FontWeight.bold))),
+            IconButton(icon: Icon(Icons.skip_previous), onPressed: prevSong),
+            IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () { if(isPlaying) _audioPlayer.pause(); else _audioPlayer.resume(); setState(() => isPlaying = !isPlaying); }),
+            IconButton(icon: Icon(Icons.skip_next), onPressed: nextSong),
+          ],
+        ),
+        LinearProgressIndicator(value: position.inSeconds / (duration.inSeconds > 0 ? duration.inSeconds : 1), backgroundColor: Colors.white10, valueColor: AlwaysStoppedAnimation(Colors.blueAccent)),
+      ],
+    ),
+  );
 
-  Widget _buildSongList() {
-    return Expanded(
-      child: ListView.builder(
-        itemCount: songs.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-            leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(songs[index]['img']!, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.music_video))),
-            title: Text(songs[index]['title']!, style: const TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text(songs[index]['artist']!),
-            onTap: () => playMusic(songs[index]['url']!, songs[index]['title']!, songs[index]['artist']!, songs[index]['img']!),
-          );
-        },
-      ),
-    );
-  }
+  Widget _bottomNav() => BottomNavigationBar(
+    backgroundColor: Colors.black,
+    selectedItemColor: Colors.blueAccent,
+    unselectedItemColor: Colors.white30,
+    items: [
+      BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+      BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+      BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Library"),
+    ],
+  );
 }
