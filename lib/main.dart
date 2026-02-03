@@ -1,107 +1,103 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt_exp;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() => runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: DhunlyProMaster(),
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF050505),
+        primaryColor: Colors.greenAccent,
+      ),
+      home: DhunlyProFinal(),
     ));
 
-class DhunlyProMaster extends StatefulWidget {
+class DhunlyProFinal extends StatefulWidget {
   @override
-  _DhunlyProMasterState createState() => _DhunlyProMasterState();
+  _DhunlyProFinalState createState() => _DhunlyProFinalState();
 }
 
-class _DhunlyProMasterState extends State<DhunlyProMaster> {
-  final yt_exp.YoutubeExplode yt = yt_exp.YoutubeExplode();
+class _DhunlyProFinalState extends State<DhunlyProFinal> {
   final AudioPlayer _player = AudioPlayer();
   bool isPlaying = false;
   bool isLoading = false;
+  List searchResults = [];
   var currentSong;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
 
-  // Categories jo ab sach mein kaam karengi
-  final List<Map<String, dynamic>> categories = [
-    {"name": "Romantic", "icon": Icons.favorite, "query": "Arijit Singh Romantic Songs"},
-    {"name": "Party", "icon": Icons.celebration, "query": "Badshah Latest Party Hits"},
-    {"name": "Sad", "icon": Icons.sentiment_dissatisfied, "query": "Sad Punjabi Songs"},
-    {"name": "Gym", "icon": Icons.fitness_center, "query": "High Bass Workout Music"},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _player.onDurationChanged.listen((d) => setState(() => duration = d));
+    _player.onPositionChanged.listen((p) => setState(() => position = p));
+    _player.onPlayerStateChanged.listen((s) => setState(() => isPlaying = s == PlayerState.playing));
+  }
 
-  // Search aur Play function (Full Power)
-  void fetchAndPlay(String query) async {
-    setState(() {
-      isLoading = true;
-      isPlaying = false;
-    });
+  // SAAVN API ENGINE (100% Working)
+  Future<void> searchMusic(String query) async {
+    if (query.isEmpty) return;
+    setState(() => isLoading = true);
     try {
-      var search = await yt.search.search(query);
-      if (search.isNotEmpty) {
-        var video = search.first;
-        var manifest = await yt.videos.streamsClient.getManifest(video.id);
-        var audioUrl = manifest.audioOnly.withHighestBitrate().url.toString();
-
-        await _player.play(UrlSource(audioUrl));
+      final response = await http.get(Uri.parse("https://saavn.me/search/songs?query=$query&limit=15"));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         setState(() {
-          currentSong = {
-            "title": video.title,
-            "artist": video.author,
-            "img": video.thumbnails.highResUrl,
-          };
+          searchResults = data['data']['results'];
           isLoading = false;
-          isPlaying = true;
         });
       }
     } catch (e) {
       setState(() => isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Try Again! Connection slow hai.")));
+    }
+  }
+
+  void playSong(var song) async {
+    try {
+      // Sabse high quality link select karna (320kbps)
+      String url = song['downloadUrl'].last['link'];
+      await _player.play(UrlSource(url));
+      setState(() {
+        currentSong = song;
+      });
+    } catch (e) {
+      print("Error playing: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildHeader(),
-            _buildSearchBar(),
-            if (isLoading) LinearProgressIndicator(color: Colors.greenAccent, backgroundColor: Colors.white10),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionTitle("Quick Moods"),
-                    _buildCategories(),
-                    _buildSectionTitle("Trending Now"),
-                    _buildTrendingCards(),
-                    _buildSectionTitle("Your Library"),
-                    _buildLibraryList(),
-                  ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAppBar(),
+                _buildSearchBar(),
+                if (isLoading) LinearProgressIndicator(color: Colors.greenAccent),
+                Expanded(
+                  child: searchResults.isEmpty ? _buildHomeUI() : _buildSearchResults(),
                 ),
-              ),
+                if (currentSong != null) const SizedBox(height: 140), // Space for player
+              ],
             ),
-            if (currentSong != null) _buildStickyPlayer(),
+            if (currentSong != null) _buildBottomPlayerUI(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildAppBar() {
     return Padding(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          RichText(text: TextSpan(style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold), children: [
-            TextSpan(text: "DHUNLY", style: TextStyle(color: Colors.greenAccent)),
-            TextSpan(text: "PRO"),
-          ])),
-          Icon(Icons.person_outline, size: 30),
+          const Text("DHUNLY PRO", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.greenAccent)),
+          CircleAvatar(backgroundColor: Colors.white10, child: Icon(Icons.person, color: Colors.white)),
         ],
       ),
     );
@@ -109,12 +105,12 @@ class _DhunlyProMasterState extends State<DhunlyProMaster> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: TextField(
-        onSubmitted: (v) => fetchAndPlay(v),
+        onSubmitted: (v) => searchMusic(v),
         decoration: InputDecoration(
-          hintText: "Search Songs or Artists...",
-          prefixIcon: Icon(Icons.search, color: Colors.greenAccent),
+          hintText: "Gaana, Artist ya Album...",
+          prefixIcon: const Icon(Icons.search, color: Colors.greenAccent),
           filled: true,
           fillColor: Colors.white10,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
@@ -123,104 +119,104 @@ class _DhunlyProMasterState extends State<DhunlyProMaster> {
     );
   }
 
-  Widget _buildCategories() {
-    return Container(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.only(left: 20),
-        itemCount: categories.length,
-        itemBuilder: (context, i) => GestureDetector(
-          onTap: () => fetchAndPlay(categories[i]['query']),
-          child: Column(
-            children: [
-              Container(
-                margin: EdgeInsets.only(right: 20),
-                padding: EdgeInsets.all(15),
-                decoration: BoxDecoration(color: Colors.white12, shape: BoxShape.circle),
-                child: Icon(categories[i]['icon'], color: Colors.greenAccent),
-              ),
-              SizedBox(height: 8),
-              Padding(padding: EdgeInsets.only(right: 20), child: Text(categories[i]['name'])),
-            ],
-          ),
+  Widget _buildHomeUI() {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        const Text("Quick Mixes", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 15),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _moodBtn("Romantic", Colors.pink, "Arijit Singh"),
+            _moodBtn("Party", Colors.orange, "Badshah"),
+            _moodBtn("Gym", Colors.red, "Workout Beats"),
+          ],
         ),
-      ),
+        const SizedBox(height: 30),
+        const Text("Trending Artists", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 15),
+        _artistTile("Sidhu Moose Wala"),
+        _artistTile("Karan Aujla"),
+        _artistTile("Kaka"),
+      ],
     );
   }
 
-  Widget _buildTrendingCards() {
-    return Container(
-      height: 200,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.only(left: 20),
-        children: [
-          _card("Kaka Specials", "https://picsum.photos/300/300?music=1"),
-          _card("Punjabi 2024", "https://picsum.photos/300/300?music=2"),
-          _card("Lo-fi Study", "https://picsum.photos/300/300?music=3"),
-        ],
-      ),
-    );
-  }
-
-  Widget _card(String name, String img) {
+  Widget _moodBtn(String name, Color col, String q) {
     return GestureDetector(
-      onTap: () => fetchAndPlay(name),
-      child: Container(
-        width: 160,
-        margin: EdgeInsets.only(right: 15),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), image: DecorationImage(image: NetworkImage(img), fit: BoxFit.cover)),
-        child: Container(
-          alignment: Alignment.bottomLeft,
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black87])),
-          child: Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLibraryList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: 3,
-      itemBuilder: (context, i) => ListTile(
-        leading: Icon(Icons.music_note, color: Colors.greenAccent),
-        title: Text(i == 0 ? "Sidhu Moose Wala" : i == 1 ? "Divine" : "Karan Aujla"),
-        subtitle: Text("Top Songs"),
-        onTap: () => fetchAndPlay(i == 0 ? "295 Sidhu" : i == 1 ? "Divine Mirchi" : "Aujla Softly"),
-      ),
-    );
-  }
-
-  Widget _buildStickyPlayer() {
-    return Container(
-      margin: EdgeInsets.all(10),
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white10)),
-      child: Row(
+      onTap: () => searchMusic(q),
+      child: Column(
         children: [
-          ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(currentSong['img'], width: 50, height: 50, fit: BoxFit.cover)),
-          SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(currentSong['title'], maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(currentSong['artist'], style: TextStyle(color: Colors.grey, fontSize: 12)),
-          ])),
-          IconButton(
-            icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 40, color: Colors.greenAccent),
-            onPressed: () {
-              if (isPlaying) { _player.pause(); setState(() => isPlaying = false); }
-              else { _player.resume(); setState(() => isPlaying = true); }
-            },
-          ),
+          CircleAvatar(radius: 30, backgroundColor: col.withOpacity(0.2), child: Icon(Icons.music_note, color: col)),
+          const SizedBox(height: 8),
+          Text(name, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(padding: EdgeInsets.only(left: 20, top: 25, bottom: 10), child: Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white70)));
+  Widget _artistTile(String name) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(backgroundColor: Colors.white10, child: Text(name[0])),
+      title: Text(name),
+      subtitle: const Text("Verified Artist"),
+      trailing: const Icon(Icons.play_circle_fill, color: Colors.greenAccent),
+      onTap: () => searchMusic(name),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    return ListView.builder(
+      itemCount: searchResults.length,
+      itemBuilder: (context, i) {
+        var song = searchResults[i];
+        return ListTile(
+          leading: Image.network(song['image'][0]['link']),
+          title: Text(song['name'], maxLines: 1),
+          subtitle: Text(song['primaryArtists'], maxLines: 1),
+          onTap: () => playSong(song),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomPlayerUI() {
+    return Positioned(
+      bottom: 0, left: 0, right: 0,
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: const Color(0xFF151515),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          boxShadow: [BoxShadow(color: Colors.black, blurRadius: 10)],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(currentSong['image'].last['link'], height: 60, width: 60)),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(currentSong['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1),
+                    Text(currentSong['primaryArtists'], style: const TextStyle(color: Colors.grey, fontSize: 12), maxLines: 1),
+                  ]),
+                ),
+                IconButton(icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle, size: 45, color: Colors.greenAccent), onPressed: () => isPlaying ? _player.pause() : _player.resume()),
+              ],
+            ),
+            Slider(
+              activeColor: Colors.greenAccent,
+              value: position.inSeconds.toDouble(),
+              max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
+              onChanged: (v) => _player.seek(Duration(seconds: v.toInt())),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
