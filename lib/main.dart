@@ -25,21 +25,25 @@ class _MusicPlayerHomeState extends State<MusicPlayerHome> {
   bool isPlaying = false;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
+  
+  // Current Song Details
   String currentTitle = "Select a Song";
   String currentArtist = "Dhunly Pro Player";
-  String currentImg = "https://via.placeholder.com/150";
+  String currentImg = "https://res.cloudinary.com/ds1bcvkop/image/upload/dhunly_songs/poster1.jpg";
 
-  // --- CLOUDINARY CONFIGURATION ---
-  // Bhai yahan apna Cloudinary 'Cloud Name' daal dena
-  final String cloudName = "your_cloud_name"; 
+  // --- AAPKA CLOUDINARY CONFIG ---
+  final String cloudName = "ds1bcvkop"; 
   final String folderName = "dhunly_songs";
 
-  // Aapke gaano ki list (Cloudinary ke hisab se)
-  final List<Map<String, String>> songs = List.generate(20, (index) => {
-    "title": "Song ${index + 1}",
-    "artist": "Cloud Artist",
-    "url": "https://res.cloudinary.com/your_cloud_name/video/upload/dhunly_songs/song${index + 1}.mp3",
-    "img": "https://res.cloudinary.com/your_cloud_name/image/upload/dhunly_songs/poster${index + 1}.jpg"
+  // Ye loop automatically 20 gaane taiyar kar dega (Aap ise badha bhi sakte ho)
+  final List<Map<String, String>> songs = List.generate(20, (index) {
+    int id = index + 1;
+    return {
+      "title": "Super Hit Song $id",
+      "artist": "Dhunly Artist",
+      "url": "https://res.cloudinary.com/ds1bcvkop/video/upload/dhunly_songs/song$id.mp3",
+      "img": "https://res.cloudinary.com/ds1bcvkop/image/upload/dhunly_songs/poster$id.jpg"
+    };
   });
 
   @override
@@ -51,99 +55,105 @@ class _MusicPlayerHomeState extends State<MusicPlayerHome> {
   }
 
   void playMusic(String url, String title, String artist, String img) async {
-    await _audioPlayer.play(UrlSource(url));
-    setState(() {
-      isPlaying = true;
-      currentTitle = title;
-      currentArtist = artist;
-      currentImg = img;
-    });
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.play(UrlSource(url));
+      setState(() {
+        isPlaying = true;
+        currentTitle = title;
+        currentArtist = artist;
+        currentImg = img;
+      });
+    } catch (e) {
+      print("Error playing audio: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.deepPurple.shade900, Colors.black],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Glassmorphism Content
-            SafeArea(
+      body: Stack(
+        children: [
+          // Background Glows
+          Container(color: Colors.black),
+          Positioned(top: -100, left: -50, child: _buildGlow(Colors.deepPurple)),
+          Positioned(bottom: -100, right: -50, child: _buildGlow(Colors.blueAccent)),
+
+          SafeArea(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
               child: Column(
                 children: [
-                  Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text("DHUNLY PRO", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                  ),
-                  
-                  // Main Player Card
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20),
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
-                    ),
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: Image.network(currentImg, height: 180, width: 180, fit: BoxFit.cover),
-                        ),
-                        SizedBox(height: 20),
-                        Text(currentTitle, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                        Text(currentArtist, style: TextStyle(color: Colors.white70)),
-                        Slider(
-                          value: position.inSeconds.toDouble(),
-                          max: duration.inSeconds.toDouble(),
-                          onChanged: (value) => _audioPlayer.seek(Duration(seconds: value.toInt())),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            IconButton(icon: Icon(Icons.skip_previous, size: 40), onPressed: () {}),
-                            IconButton(
-                              icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 60, color: Colors.blueAccent),
-                              onPressed: () {
-                                if (isPlaying) { _audioPlayer.pause(); } else { _audioPlayer.resume(); }
-                                setState(() => isPlaying = !isPlaying);
-                              },
-                            ),
-                            IconButton(icon: Icon(Icons.skip_next, size: 40), onPressed: () {}),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Song List
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: songs.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: CircleAvatar(backgroundImage: NetworkImage(songs[index]['img']!)),
-                          title: Text(songs[index]['title']!),
-                          subtitle: Text(songs[index]['artist']!),
-                          trailing: Icon(Icons.play_arrow_outlined),
-                          onTap: () => playMusic(songs[index]['url']!, songs[index]['title']!, songs[index]['artist']!, songs[index]['img']!),
-                        );
-                      },
-                    ),
-                  ),
+                  _buildAppBar(),
+                  _buildMainPlayerCard(),
+                  _buildSongList(),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlow(Color color) => Container(height: 300, width: 300, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.3), blurRadius: 100));
+
+  Widget _buildAppBar() => Padding(padding: EdgeInsets.all(20), child: Text("DHUNLY PRO", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 3, color: Colors.white70)));
+
+  Widget _buildMainPlayerCard() {
+    return Container(
+      margin: EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(currentImg, height: 160, width: 160, fit: BoxFit.cover)),
+          SizedBox(height: 15),
+          Text(currentTitle, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(currentArtist, style: TextStyle(color: Colors.white54)),
+          Slider(
+            activeColor: Colors.blueAccent,
+            inactiveColor: Colors.white24,
+            value: position.inSeconds.toDouble(),
+            max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
+            onChanged: (v) => _audioPlayer.seek(Duration(seconds: v.toInt())),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(icon: Icon(Icons.skip_previous, size: 35), onPressed: () {}),
+              GestureDetector(
+                onTap: () {
+                  if (isPlaying) _audioPlayer.pause(); else _audioPlayer.resume();
+                  setState(() => isPlaying = !isPlaying);
+                },
+                child: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 70, color: Colors.blueAccent),
+              ),
+              IconButton(icon: Icon(Icons.skip_next, size: 35), onPressed: () {}),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSongList() {
+    return Expanded(
+      child: ListView.builder(
+        itemCount: songs.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+            leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(songs[index]['img']!, width: 50, height: 50, fit: BoxFit.cover)),
+            title: Text(songs[index]['title']!, style: TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text(songs[index]['artist']!),
+            onTap: () => playMusic(songs[index]['url']!, songs[index]['title']!, songs[index]['artist']!, songs[index]['img']!),
+          );
+        },
       ),
     );
   }
