@@ -6,7 +6,6 @@
     <application
         android:label="dhunly_pro"
         android:name="${applicationName}"
-        android:icon="@drawable/launch_background"
         android:usesCleartextTraffic="true">
         
         <activity
