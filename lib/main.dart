@@ -2,49 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:ui';
 
-void main() => runApp(DhunlySpotify());
+void main() => runApp(DhunlyFinal());
 
-class DhunlySpotify extends StatelessWidget {
+class DhunlyFinal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: SpotifyHome(),
+      home: SpotifyGlassHome(),
     );
   }
 }
 
-class SpotifyHome extends StatefulWidget {
+class SpotifyGlassHome extends StatefulWidget {
   @override
-  _SpotifyHomeState createState() => _SpotifyHomeState();
+  _SpotifyGlassHomeState createState() => _SpotifyGlassHomeState();
 }
 
-class _SpotifyHomeState extends State<SpotifyHome> {
+class _SpotifyGlassHomeState extends State<SpotifyGlassHome> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool isPlaying = false;
   int currentIndex = 0;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
 
-  // Cloudinary Config (Aapka Cloud Name)
-  final String cloudName = "ds1bcvkop";
-  List<Map<String, String>> songs = [];
-  List<Map<String, String>> filteredSongs = [];
-  TextEditingController searchController = TextEditingController();
+  // --- DIRECT PUBLIC LINKS (Bina Upload Wale Gaane) ---
+  final List<Map<String, String>> songs = [
+    {"title": "Pasoori", "artist": "Ali Sethi", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", "img": "https://picsum.photos/id/1/200/200"},
+    {"title": "Excuses", "artist": "AP Dhillon", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", "img": "https://picsum.photos/id/2/200/200"},
+    {"title": "Insane", "artist": "AP Dhillon", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", "img": "https://picsum.photos/id/3/200/200"},
+    {"title": "Desire", "artist": "Gur Sidhu", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", "img": "https://picsum.photos/id/4/200/200"},
+    {"title": "295", "artist": "Sidhu Moose Wala", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3", "img": "https://picsum.photos/id/5/200/200"},
+    {"title": "The Last Ride", "artist": "Sidhu", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3", "img": "https://picsum.photos/id/10/200/200"},
+    {"title": "Elevated", "artist": "Shubh", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3", "img": "https://picsum.photos/id/12/200/200"},
+    {"title": "No Love", "artist": "Shubh", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3", "img": "https://picsum.photos/id/15/200/200"},
+    // Aap aur bhi links yahan bina upload kiye daal sakte ho
+  ];
 
   @override
   void initState() {
     super.initState();
-    // 50 Songs generated automatically
-    songs = List.generate(50, (index) => {
-      "title": "Song ${index + 1}",
-      "artist": "Trending Artist",
-      "url": "https://res.cloudinary.com/$cloudName/video/upload/dhunly_songs/song${index + 1}.mp3",
-      "img": "https://res.cloudinary.com/$cloudName/image/upload/dhunly_songs/poster${index + 1}.jpg"
-    });
-    filteredSongs = songs;
-
     _audioPlayer.onDurationChanged.listen((d) => setState(() => duration = d));
     _audioPlayer.onPositionChanged.listen((p) => setState(() => position = p));
     _audioPlayer.onPlayerComplete.listen((event) => nextSong());
@@ -66,116 +64,79 @@ class _SpotifyHomeState extends State<SpotifyHome> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Glows
-          Positioned(top: -150, left: -100, child: _glowCircle(Colors.blueAccent)),
-          Positioned(bottom: -150, right: -100, child: _glowCircle(Colors.purpleAccent)),
-
+          // Spotify Glass Background
+          Positioned(top: -100, left: -50, child: _glow(Colors.blueAccent)),
+          Positioned(bottom: -100, right: -50, child: _glow(Colors.purpleAccent)),
+          
           SafeArea(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+              filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
               child: Column(
                 children: [
-                  _header(),
-                  _searchBar(),
-                  _featuredCard(),
-                  _songListHeader(),
+                  _appBar(),
+                  _mainPlayer(),
+                  _listHeader(),
                   _songList(),
-                  if (isPlaying || position > Duration.zero) _miniPlayer(),
+                  if (isPlaying || position > Duration.zero) _floatingMiniPlayer(),
                 ],
               ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _bottomNav(),
     );
   }
 
-  Widget _glowCircle(Color color) => Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 200, spreadRadius: 100)]));
+  Widget _glow(Color c) => Container(width: 300, height: 300, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: c.withOpacity(0.4), blurRadius: 150, spreadRadius: 50)]));
 
-  Widget _header() => Padding(
-    padding: EdgeInsets.all(20),
-    child: Row(children: [Text("Good Evening", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold))]),
-  );
+  Widget _appBar() => Padding(padding: EdgeInsets.all(20), child: Row(children: [Text("DHUNLY PRO", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2))]));
 
-  Widget _searchBar() => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 20),
-    child: TextField(
-      onChanged: (v) => setState(() => filteredSongs = songs.where((s) => s['title']!.toLowerCase().contains(v.toLowerCase())).toList()),
-      decoration: InputDecoration(
-        hintText: "Search songs, artists...",
-        prefixIcon: Icon(Icons.search),
-        filled: true,
-        fillColor: Colors.white10,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-      ),
-    ),
-  );
-
-  Widget _featuredCard() => Container(
+  Widget _mainPlayer() => Container(
     margin: EdgeInsets.all(20),
-    height: 150,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      gradient: LinearGradient(colors: [Colors.blueAccent.withOpacity(0.4), Colors.transparent]),
-      border: Border.all(color: Colors.white10),
-    ),
-    child: Row(
+    padding: EdgeInsets.all(20),
+    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white10)),
+    child: Column(
       children: [
-        Padding(padding: EdgeInsets.all(15), child: ClipRRect(borderRadius: BorderRadius.circular(15), child: Image.network(songs[currentIndex]['img']!, width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (c,e,s) => Icon(Icons.music_note, size: 80)))),
-        Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text("NOW PLAYING", style: TextStyle(letterSpacing: 2, fontSize: 10, color: Colors.blueAccent)),
-          Text(songs[currentIndex]['title']!, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1),
-          Text(songs[currentIndex]['artist']!, style: TextStyle(color: Colors.white70)),
-        ]))
+        ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(songs[currentIndex]['img']!, height: 150, width: 150, fit: BoxFit.cover)),
+        SizedBox(height: 15),
+        Text(songs[currentIndex]['title']!, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(songs[currentIndex]['artist']!, style: TextStyle(color: Colors.white54)),
+        Slider(
+          activeColor: Colors.blueAccent,
+          value: position.inSeconds.toDouble(),
+          max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
+          onChanged: (v) => _audioPlayer.seek(Duration(seconds: v.toInt())),
+        ),
       ],
     ),
   );
 
-  Widget _songListHeader() => Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10), child: Row(children: [Text("Your Library", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))]));
+  Widget _listHeader() => Padding(padding: EdgeInsets.symmetric(horizontal: 25), child: Align(alignment: Alignment.centerLeft, child: Text("Direct Playlist", style: TextStyle(fontSize: 18, color: Colors.blueAccent, fontWeight: FontWeight.bold))));
 
   Widget _songList() => Expanded(
     child: ListView.builder(
-      itemCount: filteredSongs.length,
+      itemCount: songs.length,
       itemBuilder: (context, index) => ListTile(
-        leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(filteredSongs[index]['img']!, width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c,e,s) => Icon(Icons.music_video))),
-        title: Text(filteredSongs[index]['title']!),
-        subtitle: Text(filteredSongs[index]['artist']!),
-        onTap: () => playMusic(songs.indexOf(filteredSongs[index])),
+        leading: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(songs[index]['img']!, width: 50, height: 50, fit: BoxFit.cover)),
+        title: Text(songs[index]['title']!),
+        subtitle: Text(songs[index]['artist']!),
+        onTap: () => playMusic(index),
       ),
     ),
   );
 
-  Widget _miniPlayer() => Container(
-    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    padding: EdgeInsets.all(10),
-    decoration: BoxDecoration(color: Colors.grey.shade900, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.white10)),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
+  Widget _floatingMiniPlayer() => Container(
+    margin: EdgeInsets.all(10),
+    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+    decoration: BoxDecoration(color: Colors.grey.shade900, borderRadius: BorderRadius.circular(15)),
+    child: Row(
       children: [
-        Row(
-          children: [
-            ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(songs[currentIndex]['img']!, width: 45, height: 45, fit: BoxFit.cover)),
-            SizedBox(width: 15),
-            Expanded(child: Text(songs[currentIndex]['title']!, style: TextStyle(fontWeight: FontWeight.bold))),
-            IconButton(icon: Icon(Icons.skip_previous), onPressed: prevSong),
-            IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () { if(isPlaying) _audioPlayer.pause(); else _audioPlayer.resume(); setState(() => isPlaying = !isPlaying); }),
-            IconButton(icon: Icon(Icons.skip_next), onPressed: nextSong),
-          ],
-        ),
-        LinearProgressIndicator(value: position.inSeconds / (duration.inSeconds > 0 ? duration.inSeconds : 1), backgroundColor: Colors.white10, valueColor: AlwaysStoppedAnimation(Colors.blueAccent)),
+        Icon(Icons.music_note, color: Colors.blueAccent),
+        SizedBox(width: 15),
+        Expanded(child: Text(songs[currentIndex]['title']!, style: TextStyle(fontSize: 12))),
+        IconButton(icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow), onPressed: () { if(isPlaying) _audioPlayer.pause(); else _audioPlayer.resume(); setState(() => isPlaying = !isPlaying); }),
+        IconButton(icon: Icon(Icons.skip_next), onPressed: nextSong),
       ],
     ),
-  );
-
-  Widget _bottomNav() => BottomNavigationBar(
-    backgroundColor: Colors.black,
-    selectedItemColor: Colors.blueAccent,
-    unselectedItemColor: Colors.white30,
-    items: [
-      BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-      BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-      BottomNavigationBarItem(icon: Icon(Icons.library_music), label: "Library"),
-    ],
   );
 }
