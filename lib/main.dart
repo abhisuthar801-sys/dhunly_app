@@ -28,57 +28,49 @@ class _SuperFastPlayerState extends State<SuperFastPlayer> {
   bool isPlaying = false;
   bool isLoading = false;
   int currentIndex = 0;
-  Duration duration = Duration.zero;
-  Duration position = Duration.zero;
 
-  // --- 100% WORKING HIGH-SPEED CLOUDINARY LINKS ---
+  // --- 100% WORKING FAST LINKS ---
   final List<Map<String, String>> songs = [
     {
       "title": "Pasoori",
-      "artist": "Ali Sethi",
       "url": "https://res.cloudinary.com/dxfq3iotg/video/upload/v1655370213/sample_audio_1.mp3",
       "img": "https://i.ytimg.com/vi/5Eqb_-j3FDA/0.jpg"
     },
     {
       "title": "295",
-      "artist": "Sidhu Moose Wala",
       "url": "https://res.cloudinary.com/dxfq3iotg/video/upload/v1655370213/sample_audio_2.mp3",
       "img": "https://i.ytimg.com/vi/n_Wce6z38ps/0.jpg"
-    },
-    {
-      "title": "Elevated",
-      "artist": "Shubh",
-      "url": "https://res.cloudinary.com/dxfq3iotg/video/upload/v1655370213/sample_audio_3.mp3",
-      "img": "https://i.ytimg.com/vi/mH7-K8nSIsU/0.jpg"
     }
   ];
 
   @override
   void initState() {
     super.initState();
-    // Audio settings for fast playback
-    _audioPlayer.onDurationChanged.listen((d) => setState(() => duration = d));
-    _audioPlayer.onPositionChanged.listen((p) => setState(() => position = p));
-    _audioPlayer.onPlayerStateChanged.listen((state) {
-      if (state == PlayerState.playing) setState(() => isLoading = false);
-    });
+    // Audio configuration fix
+    _audioPlayer.setReleaseMode(ReleaseMode.stop);
   }
 
   Future<void> playSong(int index) async {
     setState(() {
       currentIndex = index;
       isLoading = true;
-      isPlaying = false;
     });
 
     try {
       await _audioPlayer.stop();
-      // Fast buffering source
+      // Direct stream with source
       await _audioPlayer.play(UrlSource(songs[index]['url']!));
-      setState(() => isPlaying = true);
+      
+      setState(() {
+        isPlaying = true;
+        isLoading = false;
+      });
     } catch (e) {
       setState(() => isLoading = false);
-      print("Error: $e");
+      // Agar error aaye toh screen par dikhega
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: Internet slow hai ya link block hai!"))
+      );
     }
   }
 
@@ -86,46 +78,38 @@ class _SuperFastPlayerState extends State<SuperFastPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: Text("DHUNLY PRO"), centerTitle: true),
       body: Column(
         children: [
-          _nowPlayingSection(),
+          const SizedBox(height: 60),
+          _playerCard(),
           Expanded(child: _listSection()),
         ],
       ),
     );
   }
 
-  Widget _nowPlayingSection() {
+  Widget _playerCard() {
     return Container(
-      padding: EdgeInsets.all(20),
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)),
       child: Column(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.network(songs[currentIndex]['img']!, height: 200, width: double.infinity, fit: BoxFit.cover),
+            borderRadius: BorderRadius.circular(15),
+            child: Image.network(songs[currentIndex]['img']!, height: 150, fit: BoxFit.cover),
           ),
-          Slider(
-            activeColor: Colors.blueAccent,
-            value: position.inSeconds.toDouble(),
-            max: duration.inSeconds.toDouble() > 0 ? duration.inSeconds.toDouble() : 1.0,
-            onChanged: (v) => _audioPlayer.seek(Duration(seconds: v.toInt())),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (isLoading)
-                LoadingAnimationWidget.staggeredDotsWave(color: Colors.blueAccent, size: 50)
-              else
-                IconButton(
-                  icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 70, color: Colors.blueAccent),
-                  onPressed: () {
-                    if (isPlaying) _audioPlayer.pause(); else _audioPlayer.resume();
-                    setState(() => isPlaying = !isPlaying);
-                  },
-                ),
-            ],
-          ),
+          const SizedBox(height: 20),
+          if (isLoading)
+            LoadingAnimationWidget.staggeredDotsWave(color: Colors.blueAccent, size: 50)
+          else
+            IconButton(
+              icon: Icon(isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 70, color: Colors.blueAccent),
+              onPressed: () {
+                if (isPlaying) _audioPlayer.pause(); else _audioPlayer.resume();
+                setState(() => isPlaying = !isPlaying);
+              },
+            ),
         ],
       ),
     );
@@ -135,9 +119,8 @@ class _SuperFastPlayerState extends State<SuperFastPlayer> {
     return ListView.builder(
       itemCount: songs.length,
       itemBuilder: (context, index) => ListTile(
-        leading: CircleAvatar(backgroundImage: NetworkImage(songs[index]['img']!)),
+        leading: Image.network(songs[index]['img']!, width: 50),
         title: Text(songs[index]['title']!),
-        subtitle: Text(songs[index]['artist']!),
         onTap: () => playSong(index),
       ),
     );
