@@ -1,28 +1,15 @@
 name: dhunly_pro
-description: "A professional Hybrid Music Player (YouTube + Direct MP3 + Cloudinary)"
+description: "Professional Music Player"
 publish_to: 'none'
-
 version: 1.0.0+1
-
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  # --- Streaming Engine ---
-  # YouTube se audio nikalne ke liye
-  youtube_explode_dart: ^2.2.2
-  
-  # Gaane play karne ke liye
   audioplayers: ^5.2.1
-
-  # --- UI & Design ---
-  # Spotify jaisa loading effect
   loading_animation_widget: ^1.2.1
-  
-  # Icons ke liye
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
