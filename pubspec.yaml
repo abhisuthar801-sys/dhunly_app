@@ -1,5 +1,5 @@
 name: dhunly_pro
-description: A professional transparent music player app.
+description: "A professional Spotify-style YouTube Music Player"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -11,23 +11,21 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Gaane bajane ke liye sabse stable package
+  # --- Music & YouTube Packages ---
   audioplayers: ^5.2.1
-
-  # Website se data fetch karne ke liye (future use ke liye)
-  http: ^1.1.0
-
-  # Glassmorphism/Transparency effects ke liye built-in hai, 
-  # par icons ke liye ye zaroori hai:
-  cupertino_icons: ^1.0.2
+  youtube_explode_dart: ^2.2.2
+  loading_animation_widget: ^1.2.1
+  
+  # --- UI Icons ---
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
 
-  # Agar aapne koi local images ya fonts daale hain toh yahan niche enable karein, 
-  # warna default settings sahi hain.
+  # Agar aapne koi local images nahi daali hain toh assets section ki zaroorat nahi hai.
+  # uses-material-design: true ke niche kuch mat likhna.
