@@ -1,5 +1,5 @@
 name: dhunly_pro
-description: "A professional Spotify-style YouTube Music Player with Glassmorphism"
+description: "A professional Spotify-style Music Player with Direct Streaming"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -11,18 +11,15 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # --- Core Music Engine ---
-  # Gaane play karne ke liye
+  # --- Music Engine ---
+  # Gaane play karne ke liye sabse best package
   audioplayers: ^5.2.1
 
-  # YouTube se direct audio khinchne ke liye
-  youtube_explode_dart: ^2.2.2
-
   # --- UI & Animations ---
-  # Spotify jaisa loading animation
+  # Premium Spotify jaisa loading effect
   loading_animation_widget: ^1.2.1
   
-  # Premium icons ke liye
+  # Icons ke liye
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
@@ -31,7 +28,5 @@ dev_dependencies:
   flutter_lints: ^3.0.0
 
 flutter:
-  # Material design enable rakhein taaki icons sahi dikhein
+  # Isse icons aur design professional dikhega
   uses-material-design: true
-
-  # Assets ki zarurat nahi hai kyunki hum sab kuch internet/cloud se utha rahe hain
